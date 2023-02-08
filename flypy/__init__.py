@@ -5,7 +5,7 @@ import requests
 from flypy.models import FlyAppDetailsResponse, FlyMachineDetailsResponse
 
 
-class FlyClient:
+class Fly:
     def __init__(self, api_token: str, app_name: str) -> None:
         self.app_name = app_name
         self.api_token = api_token

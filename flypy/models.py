@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Union
+from typing import Optional
 
 from pydantic import BaseModel, validator
 
@@ -74,29 +74,6 @@ class FlyMachineDetailsResponse(BaseModel):
     updated_at: datetime
     events: list[FlyMachineDetailsEvent]
 
-    @validator("region")
-    def validate_region(cls, region: str) -> str:
-        # Convert region to lowercase.
-        region = region.casefold()
-        assert region in FLY_REGIONS
-        return region
-
-
-class FlyMachineDetailsRequestConfigService(BaseModel):
-    ports: list
-    protocol: str
-    internal_port: int
-
-    @validator("internal_port")
-    def validate_internal_port(cls, internal_port: int) -> int:
-        assert internal_port >= 0 and internal_port <= 65536
-        return internal_port
-
-    @validator("protocol")
-    def validate_protocol(cls, protocol: str) -> str:
-        assert protocol in ["http", "tcp"]
-        return protocol
-
 
 class FlyMachineDetailsRequestConfigServicesPort(BaseModel):
     port: int
@@ -113,17 +90,69 @@ class FlyMachineDetailsRequestConfigServicesPort(BaseModel):
         if len(handlers) > 0:
             # Convert handlers to lowercase.
             handlers = [handler.casefold() for handler in handlers]
-            assert all(handler in ["http", "tcp"] for handler in handlers) is True
+            assert (
+                all(handler in ["http", "tcp", "udp"] for handler in handlers) is True
+            )
         return handlers
+
+
+class FlyMachineDetailsRequestConfigService(BaseModel):
+    ports: list[FlyMachineDetailsRequestConfigServicesPort]
+    protocol: str
+    internal_port: int
+
+    @validator("internal_port")
+    def validate_internal_port(cls, internal_port: int) -> int:
+        assert internal_port >= 0 and internal_port <= 65536
+        return internal_port
+
+    @validator("protocol")
+    def validate_protocol(cls, protocol: str) -> str:
+        assert protocol in ["http", "tcp", "udp"]
+        return protocol
+
+
+class FlyMachineDetailsRequestCheck(BaseModel):
+    type: str
+    port: int
+    method: str
+    path: str
+    interval: str
+    timeout: str
+
+
+class FlyMachineDetailsRequestGuest(BaseModel):
+    cpus: int
+    memory_mb: int
+    kernal_args: list[str]
+
+
+class FlyMachineDetailsRequestProcess(BaseModel):
+    name: str
+    entrypoint: list[str]
+    cmd: list[str]
+    env: dict[str, str]
+    user: Optional[str]
+
+
+class FlyMachineDetailsRequestMount(BaseModel):
+    volume: str
+    path: str
 
 
 class FlyMachineDetailsRequestConfig:
     image: str
+    guest: FlyMachineDetailsRequestGuest
+    size: str
     env: dict[str, str] | None
-    services: list
-    checks: dict
+    services: list[FlyMachineDetailsRequestConfigService]
+    checks: dict[str, FlyMachineDetailsRequestCheck]
+    processes: list[FlyMachineDetailsRequestProcess]
+    schedule: Optional[str]
+    mounts: Optional[list[FlyMachineDetailsRequestMount]]
+    checks: Optional[dict[str, FlyMachineDetailsRequestCheck]]
 
 
 class FlyMachineDetailsRequest(BaseModel):
     name: str
-    config: None
+    config: FlyMachineDetailsRequestConfig
