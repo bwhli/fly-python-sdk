@@ -1,7 +1,8 @@
 import os
 
 import requests
-from models import FlyAppDetails
+from exceptions import MissingApiHostnameError, MissingApiTokenError
+from models import FlyAppDetailsResponse, FlyMachineDetailsResponse
 from requests import Response
 
 
@@ -12,13 +13,37 @@ class Fly:
         self.api_token = self._get_api_token()
         self.api_version = 1
 
-    def get_app_details(self) -> FlyAppDetails:
+    def get_app(self) -> FlyAppDetailsResponse:
         """
         Returns information about a Fly.io application.
         """
         path = f"apps/{self.app_name}"
         r = self._make_api_get_request(path)
-        return FlyAppDetails(**r.json())
+        return FlyAppDetailsResponse(**r.json())
+
+    def get_machine(self, machine_id: str) -> FlyMachineDetailsResponse:
+        """Returns information about a Fly.io machine.
+
+        Args:
+            machine_id: The id string for a Fly.io machine.
+        """
+        path = f"apps/{self.app_name}/machines/{machine_id}"
+        r = self._make_api_get_request(path)
+        return FlyMachineDetailsResponse(**r.json())
+
+    def get_machines(self, ids_only: bool = False) -> list[FlyMachineDetailsResponse]:
+        """Returns a list of machines that belong to a Fly.io application.
+
+        Args:
+            ids_only: If True, only machine IDs will be returned. Defaults to False.
+        """
+        path = f"apps/{self.app_name}/machines"
+        r = self._make_api_get_request(path)
+        machines = [FlyMachineDetailsResponse(**machine) for machine in r.json()]
+        # Filter and return a list of ids if ids_only is True.
+        if ids_only is True:
+            return [machine.id for machine in machines]
+        return machines
 
     def _make_api_get_request(self, path: str) -> Response:
         url = f"http://{self.api_hostname}/v{self.api_version}/{path}"
@@ -41,9 +66,37 @@ class Fly:
         return headers
 
     def _get_api_hostname(self) -> str:
-        api_hostname = os.environ["FLY_API_HOSTNAME"]
-        return api_hostname
+        """
+        Returns the hostname that will be used to connect to the Fly.io API.
+
+        Returns:
+            The hostname that will be used to connect to the Fly.io API.
+
+        Raises:
+            MissingApiHostnameError: If FLY_API_HOSTNAME is not set as an environment variable.
+        """
+        try:
+            api_hostname = os.environ["FLY_API_HOSTNAME"]
+            return api_hostname
+        except KeyError:
+            raise MissingApiHostnameError(
+                "Please configure the FLY_API_HOSTNAME environment variable."
+            )
 
     def _get_api_token(self) -> str:
-        api_token = os.environ["FLY_API_TOKEN"]
-        return api_token
+        """
+        Returns the API token that will be used to connect to the Fly.io API.
+
+        Returns:
+            The API token that will be used to connect to the Fly.io API.
+
+        Raises:
+            MissingApiTokenError: If FLY_API_TOKEN is not set as an environment variable.
+        """
+        try:
+            api_token = os.environ["FLY_API_TOKEN"]
+            return api_token
+        except KeyError:
+            raise MissingApiTokenError(
+                "Please configure the FLY_API_TOKEN environment variable."
+            )
