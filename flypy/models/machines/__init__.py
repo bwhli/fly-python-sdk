@@ -1,24 +1,6 @@
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel, validator
-
-from flypy.constants import FLY_REGIONS
-
-##################
-# Fly App Models #
-##################
-
-
-class FlyAppDetailsResponse(BaseModel):
-    name: str
-    status: str
-    organization: dict
-
-
-######################
-# Fly Machine Models #
-######################
 
 
 class FlyMachineDetailsConfigInit(BaseModel):
@@ -132,7 +114,7 @@ class FlyMachineDetailsRequestProcess(BaseModel):
     entrypoint: list[str]
     cmd: list[str]
     env: dict[str, str]
-    user: Optional[str]
+    user: str | None = None
 
 
 class FlyMachineDetailsRequestMount(BaseModel):
@@ -148,9 +130,9 @@ class FlyMachineDetailsRequestConfig:
     services: list[FlyMachineDetailsRequestConfigService]
     checks: dict[str, FlyMachineDetailsRequestCheck]
     processes: list[FlyMachineDetailsRequestProcess]
-    schedule: Optional[str]
-    mounts: Optional[list[FlyMachineDetailsRequestMount]]
-    checks: Optional[dict[str, FlyMachineDetailsRequestCheck]]
+    schedule: str | None = None
+    mounts: list[FlyMachineDetailsRequestMount] | None = None
+    checks: dict[str, FlyMachineDetailsRequestCheck] | None = None
 
 
 class FlyMachineDetailsRequest(BaseModel):

@@ -2,40 +2,55 @@ import os
 
 import requests
 
-from flypy.models import FlyAppDetailsResponse, FlyMachineDetailsResponse
+from flypy.models.apps import FlyAppCreateRequest, FlyAppDetailsResponse
+from flypy.models.machines import FlyMachineDetailsResponse
 
 
 class Fly:
-    def __init__(self, api_token: str, app_name: str) -> None:
-        self.app_name = app_name
+    def __init__(self, api_token: str) -> None:
         self.api_token = api_token
         self.api_version = 1
 
-    def get_app(self) -> FlyAppDetailsResponse:
+    def create_app(self, app_name: str, org_slug: str) -> None:
+        """
+        Creates a new app on Fly.io.
+
+        Args:
+            app_name: The name of the new Fly.io app.
+            org_slug: The slug of the organization to create the app within.
+        """
+        path = "apps"
+        app_details = FlyAppCreateRequest(app_name=app_name, org_slug=org_slug)
+        r = self._make_api_post_request(path, app_details.dict())
+        return
+
+    def get_app(self, app_name: str) -> FlyAppDetailsResponse:
         """
         Returns information about a Fly.io application.
         """
-        path = f"apps/{self.app_name}"
+        path = f"apps/{app_name}"
         r = self._make_api_get_request(path)
         return FlyAppDetailsResponse(**r.json())
 
-    def get_machine(self, machine_id: str) -> FlyMachineDetailsResponse:
+    def get_machine(self, app_name: str, machine_id: str) -> FlyMachineDetailsResponse:
         """Returns information about a Fly.io machine.
 
         Args:
             machine_id: The id string for a Fly.io machine.
         """
-        path = f"apps/{self.app_name}/machines/{machine_id}"
+        path = f"apps/{app_name}/machines/{machine_id}"
         r = self._make_api_get_request(path)
         return FlyMachineDetailsResponse(**r.json())
 
-    def get_machines(self, ids_only: bool = False) -> list[FlyMachineDetailsResponse]:
+    def get_machines(
+        self, app_name: str, ids_only: bool = False
+    ) -> list[FlyMachineDetailsResponse]:
         """Returns a list of machines that belong to a Fly.io application.
 
         Args:
             ids_only: If True, only machine IDs will be returned. Defaults to False.
         """
-        path = f"apps/{self.app_name}/machines"
+        path = f"apps/{app_name}/machines"
         r = self._make_api_get_request(path)
         machines = [FlyMachineDetailsResponse(**machine) for machine in r.json()]
         # Filter and return a list of ids if ids_only is True.
@@ -50,8 +65,11 @@ class Fly:
         r.raise_for_status()
         return r
 
-    def _make_api_post_request() -> requests.Response:
-        return
+    def _make_api_post_request(self, path: str, payload: dict) -> requests.Response:
+        api_hostname = self._get_api_hostname()
+        url = f"{api_hostname}/v{self.api_version}/{path}"
+        r = requests.post(url, headers=self._generate_headers(), json=payload)
+        return r
 
     #############
     # Utilities #
