@@ -11,9 +11,12 @@ class Fly:
         self.api_token = api_token
         self.api_version = 1
 
-    def create_app(self, app_name: str, org_slug: str) -> None:
-        """
-        Creates a new app on Fly.io.
+    def create_app(
+        self,
+        app_name: str,
+        org_slug: str,
+    ) -> None:
+        """Creates a new app on Fly.io.
 
         Args:
             app_name: The name of the new Fly.io app.
@@ -21,21 +24,31 @@ class Fly:
         """
         path = "apps"
         app_details = FlyAppCreateRequest(app_name=app_name, org_slug=org_slug)
-        r = self._make_api_post_request(path, app_details.dict())
+        self._make_api_post_request(path, app_details.dict())
         return
 
-    def get_app(self, app_name: str) -> FlyAppDetailsResponse:
-        """
-        Returns information about a Fly.io application.
+    def get_app(
+        self,
+        app_name: str,
+    ) -> FlyAppDetailsResponse:
+        """Returns information about a Fly.io application.
+
+        Args:
+            app_name: The name of the new Fly.io app.
         """
         path = f"apps/{app_name}"
         r = self._make_api_get_request(path)
         return FlyAppDetailsResponse(**r.json())
 
-    def get_machine(self, app_name: str, machine_id: str) -> FlyMachineDetailsResponse:
+    def get_machine(
+        self,
+        app_name: str,
+        machine_id: str,
+    ) -> FlyMachineDetailsResponse:
         """Returns information about a Fly.io machine.
 
         Args:
+            app_name: The name of the new Fly.io app.
             machine_id: The id string for a Fly.io machine.
         """
         path = f"apps/{app_name}/machines/{machine_id}"
@@ -43,7 +56,9 @@ class Fly:
         return FlyMachineDetailsResponse(**r.json())
 
     def get_machines(
-        self, app_name: str, ids_only: bool = False
+        self,
+        app_name: str,
+        ids_only: bool = False,
     ) -> list[FlyMachineDetailsResponse]:
         """Returns a list of machines that belong to a Fly.io application.
 
@@ -58,14 +73,23 @@ class Fly:
             return [machine.id for machine in machines]
         return machines
 
-    def _make_api_get_request(self, path: str) -> requests.Response:
+    def _make_api_get_request(
+        self,
+        path: str,
+    ) -> requests.Response:
+        """An internal function for making GET requests to the Fly.io API."""
         api_hostname = self._get_api_hostname()
         url = f"{api_hostname}/v{self.api_version}/{path}"
         r = requests.get(url, headers=self._generate_headers())
         r.raise_for_status()
         return r
 
-    def _make_api_post_request(self, path: str, payload: dict) -> requests.Response:
+    def _make_api_post_request(
+        self,
+        path: str,
+        payload: dict,
+    ) -> requests.Response:
+        """An internal function for making POST requests to the Fly.io API."""
         api_hostname = self._get_api_hostname()
         url = f"{api_hostname}/v{self.api_version}/{path}"
         r = requests.post(url, headers=self._generate_headers(), json=payload)
@@ -76,6 +100,7 @@ class Fly:
     #############
 
     def _generate_headers(self) -> dict:
+        """Returns a dictionary containing headers for requests to the Fly.io API."""
         headers = {
             "Authorization": f"Bearer {self.api_token}",
             "Content-Type": "application/json",
@@ -83,8 +108,7 @@ class Fly:
         return headers
 
     def _get_api_hostname(self) -> str:
-        """
-        Returns the hostname that will be used to connect to the Fly.io API.
+        """Returns the hostname that will be used to connect to the Fly.io API.
 
         Returns:
             The hostname that will be used to connect to the Fly.io API.

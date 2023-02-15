@@ -122,7 +122,7 @@ class FlyMachineDetailsRequestMount(BaseModel):
     path: str
 
 
-class FlyMachineDetailsRequestConfig:
+class FlyMachineDetailsRequestConfig(BaseModel):
     image: str
     guest: FlyMachineDetailsRequestGuest
     size: str
