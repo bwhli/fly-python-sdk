@@ -1,6 +1,5 @@
 import logging
 import os
-from time import sleep
 
 import requests
 from pydantic import BaseModel
