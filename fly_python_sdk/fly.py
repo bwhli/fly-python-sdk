@@ -1,16 +1,15 @@
-import logging
 import os
 
-import requests
+import httpx
 from pydantic import BaseModel
 
-from flypy.exceptions import (
+from fly_python_sdk.exceptions import (
     AppInterfaceError,
     MachineInterfaceError,
     MissingMachineIdsError,
 )
-from flypy.models.apps import FlyAppCreateRequest, FlyAppDetailsResponse
-from flypy.models.machines import FlyMachineConfig, FlyMachineDetails
+from fly_python_sdk.models.apps import FlyAppCreateRequest, FlyAppDetailsResponse
+from fly_python_sdk.models.machines import FlyMachineConfig, FlyMachineDetails
 
 
 class Fly:
@@ -26,7 +25,7 @@ class Fly:
     # Apps #
     ########
 
-    def create_app(
+    async def create_app(
         self,
         app_name: str,
         org_slug: str,
@@ -39,7 +38,7 @@ class Fly:
         """
         path = "apps"
         app_details = FlyAppCreateRequest(app_name=app_name, org_slug=org_slug)
-        r = self._make_api_post_request(path, app_details.dict())
+        r = await self._make_api_post_request(path, app_details.dict())
 
         # Raise an exception if HTTP status code is not 201.
         if r.status_code != 201:
@@ -49,7 +48,7 @@ class Fly:
 
         return FlyMachineDetails(**r.json())
 
-    def get_app(
+    async def get_app(
         self,
         app_name: str,
     ) -> FlyAppDetailsResponse:
@@ -59,7 +58,7 @@ class Fly:
             app_name: The name of the new Fly.io app.
         """
         path = f"apps/{app_name}"
-        r = self._make_api_get_request(path)
+        r = await self._make_api_get_request(path)
 
         # Raise an exception if HTTP status code is not 200.
         if r.status_code != 200:
@@ -67,7 +66,7 @@ class Fly:
 
         return FlyAppDetailsResponse(**r.json())
 
-    def list_machines(
+    async def list_machines(
         self,
         app_name: str,
         ids_only: bool = False,
@@ -78,7 +77,7 @@ class Fly:
             ids_only: If True, only machine IDs will be returned. Defaults to False.
         """
         path = f"apps/{app_name}/machines"
-        r = self._make_api_get_request(path)
+        r = await self._make_api_get_request(path)
 
         # Raise an exception if HTTP status code is not 200.
         if r.status_code != 200:
@@ -97,7 +96,7 @@ class Fly:
     # Machines #
     ############
 
-    def create_machine(
+    async def create_machine(
         self,
         app_name: str,
         config: FlyMachineConfig,
@@ -127,7 +126,7 @@ class Fly:
             config=config,
         )
 
-        r = self._make_api_post_request(
+        r = await self._make_api_post_request(
             path,
             payload=machine_create_request.dict(exclude_defaults=True),
         )
@@ -140,7 +139,7 @@ class Fly:
 
         return FlyMachineDetails(**r.json())
 
-    def delete_machine(
+    async def delete_machine(
         self,
         app_name: str,
         machine_id: str,
@@ -152,7 +151,7 @@ class Fly:
             machine_id: The id string for a Fly.io machine.
         """
         path = f"apps/{app_name}/machines/{machine_id}"
-        r = self._make_api_delete_request(path)
+        r = await self._make_api_delete_request(path)
 
         # Raise an exception if HTTP status code is not 200.
         if r.status_code != 200:
@@ -162,7 +161,7 @@ class Fly:
 
         return
 
-    def delete_machines(
+    async def delete_machines(
         self,
         app_name: str,
         machine_ids: list[str] = [],
@@ -195,7 +194,7 @@ class Fly:
 
         return
 
-    def get_machine(
+    async def get_machine(
         self,
         app_name: str,
         machine_id: str,
@@ -207,7 +206,7 @@ class Fly:
             machine_id: The id string for a Fly.io machine.
         """
         path = f"apps/{app_name}/machines/{machine_id}"
-        r = self._make_api_get_request(path)
+        r = await self._make_api_get_request(path)
 
         # Raise an exception if HTTP status code is not 200.
         if r.status_code != 200:
@@ -217,7 +216,7 @@ class Fly:
 
         return FlyMachineDetails(**r.json())
 
-    def start_machine(
+    async def start_machine(
         self,
         app_name: str,
         machine_id: str,
@@ -229,7 +228,7 @@ class Fly:
             machine_id: The id string for a Fly.io machine.
         """
         path = f"apps/{app_name}/machines/{machine_id}/start"
-        r = self._make_api_post_request(path)
+        r = await self._make_api_post_request(path)
 
         # Raise an exception if HTTP status code is not 200.
         if r.status_code != 200:
@@ -239,7 +238,7 @@ class Fly:
 
         return
 
-    def stop_machine(
+    async def stop_machine(
         self,
         app_name: str,
         machine_id: str,
@@ -251,7 +250,7 @@ class Fly:
             machine_id: The id string for a Fly.io machine.
         """
         path = f"apps/{app_name}/machines/{machine_id}/stop"
-        r = self._make_api_post_request(path)
+        r = await self._make_api_post_request(path)
 
         # Raise an exception if HTTP status code is not 200.
         if r.status_code != 200:
@@ -265,39 +264,41 @@ class Fly:
     # Utilities #
     #############
 
-    def _make_api_delete_request(
+    async def _make_api_delete_request(
         self,
         path: str,
-    ) -> requests.Response:
+    ) -> httpx.Response:
         """An internal function for making DELETE requests to the Fly.io API."""
         api_hostname = self._get_api_hostname()
         url = f"{api_hostname}/v{self.api_version}/{path}"
-        r = requests.delete(url, headers=self._generate_headers())
-        r.raise_for_status()
+        async with httpx.AsyncClient() as client:
+            r = await client.delete(url, headers=self._generate_headers())
+            r.raise_for_status()
         return r
 
-    def _make_api_get_request(
+    async def _make_api_get_request(
         self,
         path: str,
-    ) -> requests.Response:
+    ) -> httpx.Response:
         """An internal function for making GET requests to the Fly.io API."""
         api_hostname = self._get_api_hostname()
         url = f"{api_hostname}/v{self.api_version}/{path}"
-        r = requests.get(url, headers=self._generate_headers())
-        r.raise_for_status()
+        async with httpx.AsyncClient() as client:
+            r = await client.get(url, headers=self._generate_headers())
+            r.raise_for_status()
         return r
 
-    def _make_api_post_request(
+    async def _make_api_post_request(
         self,
         path: str,
         payload: dict = {},
-    ) -> requests.Response:
+    ) -> httpx.Response:
         """An internal function for making POST requests to the Fly.io API."""
         api_hostname = self._get_api_hostname()
         url = f"{api_hostname}/v{self.api_version}/{path}"
-        logging.debug(f"API Request URL: {url}")
-        r = requests.post(url, headers=self._generate_headers(), json=payload)
-        r.raise_for_status()
+        async with httpx.AsyncClient() as client:
+            r = await client.post(url, headers=self._generate_headers(), json=payload)
+            r.raise_for_status()
         return r
 
     def _generate_headers(self) -> dict:

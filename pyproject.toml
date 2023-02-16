@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "flypy"
+name = "fly-python-sdk"
 version = "0.1.0"
 description = ""
 authors = ["Brian Li <brian@brianli.com>"]
@@ -9,12 +9,14 @@ readme = "README.md"
 python = "^3.11"
 requests = "^2.28.2"
 pydantic = "^1.10.4"
+httpx = "^0.23.3"
 
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.0.243"
 python-dotenv = "^0.21.1"
 pytest = "^7.2.1"
+flit = "^3.8.0"
 
 [build-system]
 requires = ["poetry-core"]
