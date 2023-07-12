@@ -1,3 +1,6 @@
+FLY_MACHINE_DEFAULT_CPU_COUNT = 1
+FLY_MACHINE_DEFAULT_MEMORY_MB = 256
+
 FLY_REGIONS = [
     "ams",  # Amsterdam, Netherlands
     "arn",  # Stockholm, Sweden

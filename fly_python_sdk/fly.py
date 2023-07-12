@@ -9,7 +9,7 @@ from fly_python_sdk.exceptions import (
     MissingMachineIdsError,
 )
 from fly_python_sdk.models.apps import FlyAppCreateRequest, FlyAppDetailsResponse
-from fly_python_sdk.models.machines import FlyMachineConfig, FlyMachineDetails
+from fly_python_sdk.models.machines import FlyMachine, FlyMachineConfig
 
 
 class Fly:
@@ -37,7 +37,10 @@ class Fly:
             org_slug: The slug of the organization to create the app within.
         """
         path = "apps"
-        app_details = FlyAppCreateRequest(app_name=app_name, org_slug=org_slug)
+        app_details = FlyAppCreateRequest(
+            app_name=app_name,
+            org_slug=org_slug,
+        )
         r = await self._make_api_post_request(path, app_details.dict())
 
         # Raise an exception if HTTP status code is not 201.
@@ -46,7 +49,7 @@ class Fly:
                 message=f"Unable to create {app_name} in {org_slug}!"
             )
 
-        return FlyMachineDetails(**r.json())
+        return FlyMachine(**r.json())
 
     async def get_app(
         self,
@@ -70,7 +73,7 @@ class Fly:
         self,
         app_name: str,
         ids_only: bool = False,
-    ) -> list[FlyMachineDetails] | list[str]:
+    ) -> list[FlyMachine] | list[str]:
         """Returns a list of machines that belong to a Fly.io application.
 
         Args:
@@ -83,8 +86,8 @@ class Fly:
         if r.status_code != 200:
             raise AppInterfaceError(message=f"Unable to get machines in {app_name}!")
 
-        # Create a FlyMachineDetails object for each machine.
-        machines = [FlyMachineDetails(**machine) for machine in r.json()]
+        # Create a FlyMachine object for each machine.
+        machines = [FlyMachine(**machine) for machine in r.json()]
 
         # Filter and return a list of ids if ids_only is True.
         if ids_only is True:
@@ -114,13 +117,7 @@ class Fly:
         path = f"apps/{app_name}/machines"
 
         # Create Pydantic model for machine creation requests.
-        class _FlyMachineCreateRequest(BaseModel):
-            name: str | None = None
-            region: str | None = None
-            config: FlyMachineConfig
-
-        # Create FlyMachineCreateRequest object
-        machine_create_request = _FlyMachineCreateRequest(
+        fly_machine = FlyMachine(
             name=name,
             region=region,
             config=config,
@@ -128,7 +125,7 @@ class Fly:
 
         r = await self._make_api_post_request(
             path,
-            payload=machine_create_request.dict(exclude_defaults=True),
+            payload=fly_machine.model_dump(exclude_none=True),
         )
 
         # Raise an exception if HTTP status code is not 200.
@@ -137,7 +134,7 @@ class Fly:
                 message=f"{r.status_code}: Unable to create machine!"
             )
 
-        return FlyMachineDetails(**r.json())
+        return FlyMachine(**r.json())
 
     async def delete_machine(
         self,
@@ -198,7 +195,7 @@ class Fly:
         self,
         app_name: str,
         machine_id: str,
-    ) -> FlyMachineDetails:
+    ) -> FlyMachine:
         """Returns information about a Fly.io machine.
 
         Args:
@@ -214,7 +211,7 @@ class Fly:
                 message=f"Unable to delete {machine_id} in {app_name}!"
             )
 
-        return FlyMachineDetails(**r.json())
+        return FlyMachine(**r.json())
 
     async def start_machine(
         self,
