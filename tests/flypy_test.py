@@ -1,15 +1,12 @@
 import asyncio
 import hashlib
-import logging
 import os
 from datetime import datetime
-from time import sleep
 
-import pytest
 from dotenv import load_dotenv
 
 from fly_python_sdk.fly import Fly
-from fly_python_sdk.models.machines import FlyMachineConfig
+from fly_python_sdk.models import FlyMachineConfig
 
 load_dotenv()
 
@@ -41,7 +38,7 @@ async def test_fly_destroy_machines():
 
 
 async def test_fly_wait_machine():
-    result = await fly.wait_machine(
+    await fly.wait_machine(
         "fly-python-sdk",
         "e2865111fe60d8",
         "stopped",

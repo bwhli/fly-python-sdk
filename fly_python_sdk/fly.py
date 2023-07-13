@@ -3,7 +3,7 @@ import logging
 
 import httpx
 
-from fly_python_sdk.constants import (
+from fly_python_sdk import (
     FLY_MACHINE_DEFAULT_WAIT_TIMEOUT,
     FLY_MACHINE_STATES,
     FLY_MACHINES_API_DEFAULT_API_HOSTNAME,

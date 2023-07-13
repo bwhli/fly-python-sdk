@@ -1,12 +1,9 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, validator
+from pydantic import BaseModel
 
-from fly_python_sdk.constants import (
-    FLY_MACHINE_DEFAULT_CPU_COUNT,
-    FLY_MACHINE_DEFAULT_MEMORY_MB,
-)
+from fly_python_sdk import FLY_MACHINE_DEFAULT_CPU_COUNT, FLY_MACHINE_DEFAULT_MEMORY_MB
 
 # Apps
 
