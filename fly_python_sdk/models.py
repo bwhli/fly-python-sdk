@@ -8,6 +8,22 @@ from fly_python_sdk.constants import (
     FLY_MACHINE_DEFAULT_MEMORY_MB,
 )
 
+# Apps
+
+
+class FlyAppCreateRequest(BaseModel):
+    app_name: str
+    org_slug: str
+
+
+class FlyAppDetailsResponse(BaseModel):
+    name: str
+    status: str
+    organization: dict
+
+
+# Machines
+
 
 class FlyMachineConfigTcpCheck(BaseModel):
     type: str = "tcp"

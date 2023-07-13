@@ -16,8 +16,7 @@ from fly_python_sdk.exceptions import (
     MachineStateTransitionError,
     MissingMachineIdsError,
 )
-from fly_python_sdk.models.apps import FlyAppCreateRequest
-from fly_python_sdk.models.machines import FlyMachine, FlyMachineConfig
+from fly_python_sdk.models import FlyAppCreateRequest, FlyMachine, FlyMachineConfig
 
 
 class Fly:
