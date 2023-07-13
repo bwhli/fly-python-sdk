@@ -72,6 +72,7 @@ class Fly:
         config: FlyMachineConfig,
         name: str = None,
         region: str = None,
+        wait_for_started_state: bool = True,
     ) -> FlyMachine:
         """Creates a Fly machine.
 
@@ -102,9 +103,12 @@ class Fly:
 
         created_machine = FlyMachine(**r.json())
 
-        await self.wait_machine(app_name, created_machine.id, "started")
+        # Newly created Machines should start automatically,
+        # so wait for the created machine to enter the "started" state.
+        if wait_for_started_state is True:
+            await self.wait_machine(app_name, created_machine.id, "started")
 
-        logging.info(f"Machine {created_machine.id} has been created.")
+        logging.info(f"Machine {created_machine.id} has been created in {region}.")
 
         return created_machine
 
@@ -112,6 +116,7 @@ class Fly:
         self,
         app_name: str,
         machine_id: str,
+        wait_for_detroyed_state: bool = True,
     ) -> None:
         """Destroys a Fly machine.
 
@@ -139,7 +144,9 @@ class Fly:
 
         logging.info(f"Machine {machine_id} has been deleted.")
 
-        await self.wait_machine(app_name, machine_id, "destroyed")
+        # Wait for the machine to enter the "destroyed" state.
+        if wait_for_detroyed_state is True:
+            await self.wait_machine(app_name, machine_id, "destroyed")
 
         return
 
@@ -225,6 +232,7 @@ class Fly:
         self,
         app_name: str,
         machine_id: str,
+        wait_for_started_state: bool = True,
     ) -> None:
         """Starts a Fly machine.
 
@@ -242,7 +250,8 @@ class Fly:
                 message=f"Unable to start {machine_id} in {app_name}!"
             )
 
-        await self.wait_machine(app_name, machine_id, "started")
+        if wait_for_started_state is True:
+            await self.wait_machine(app_name, machine_id, "started")
 
         return
 
