@@ -3,6 +3,11 @@ import logging
 
 import httpx
 
+from fly_python_sdk.constants import (
+    FLY_MACHINE_DEFAULT_WAIT_TIMEOUT,
+    FLY_MACHINES_API_DEFAULT_API_HOSTNAME,
+    FLY_MACHINES_API_VERSION,
+)
 from fly_python_sdk.exceptions import (
     AppInterfaceError,
     MachineInterfaceError,
@@ -19,10 +24,10 @@ class Fly:
     def __init__(
         self,
         api_token: str,
-        base_url: str = "https://api.machines.dev",
+        base_url: str = FLY_MACHINES_API_DEFAULT_API_HOSTNAME,
     ):
         self.api_token = api_token
-        self.api_version = 1
+        self.api_version = FLY_MACHINES_API_VERSION
         self.base_url = base_url
 
     ########
@@ -101,12 +106,12 @@ class Fly:
 
         return created_machine
 
-    async def delete_machine(
+    async def destroy_machine(
         self,
         app_name: str,
         machine_id: str,
     ) -> None:
-        """Deletes a Fly machine.
+        """Destroys a Fly machine.
 
         Args:
             app_name: The name of the new Fly app.
@@ -132,15 +137,17 @@ class Fly:
 
         logging.info(f"Machine {machine_id} has been deleted.")
 
+        await self.wait_machine(app_name, machine_id, "destroyed")
+
         return
 
-    async def delete_machines(
+    async def destroy_machines(
         self,
         app_name: str,
         machine_ids: list[str] = [],
         delete_all: bool = False,
     ) -> None:
-        """Convenince function for deleting multiple Fly machines.
+        """Convenince function for destroying multiple Fly machines.
 
         Args:
             app_name: The name of the new Fly app.
@@ -158,7 +165,9 @@ class Fly:
                 "Please provide at least one machine ID to delete."
             )
 
-        await asyncio.gather(*[self.delete_machine(app_name, id) for id in machine_ids])
+        await asyncio.gather(
+            *[self.destroy_machine(app_name, id) for id in machine_ids]
+        )
 
         return
 
@@ -280,7 +289,7 @@ class Fly:
         app_name: str,
         machine_id: str,
         target_state: str,
-        timeout: int = 60,
+        timeout: int = FLY_MACHINE_DEFAULT_WAIT_TIMEOUT,
     ) -> None:
         """Waits for a Fly machine to be reach the target state.
 

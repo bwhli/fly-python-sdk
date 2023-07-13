@@ -1,5 +1,20 @@
 FLY_MACHINE_DEFAULT_CPU_COUNT = 1
 FLY_MACHINE_DEFAULT_MEMORY_MB = 256
+FLY_MACHINE_DEFAULT_WAIT_TIMEOUT = 60
+
+FLY_MACHINES_API_DEFAULT_API_HOSTNAME = "https://api.machines.dev"
+FLY_MACHINES_API_VERSION = 1
+
+FLY_MACHINE_STATES = [
+    "created",
+    "starting",
+    "started",
+    "stopping",
+    "stopped",
+    "replacing",
+    "destroying",
+    "destroyed",
+]
 
 FLY_REGIONS = [
     "ams",  # Amsterdam, Netherlands
