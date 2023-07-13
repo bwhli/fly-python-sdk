@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional
 
 from pydantic import BaseModel, validator
@@ -28,6 +29,7 @@ class FlyMachineConfigHttpCheck(BaseModel):
 
 
 class FlyMachineConfigGuest(BaseModel):
+    cpu_kind: str
     cpus: int = FLY_MACHINE_DEFAULT_CPU_COUNT
     memory_mb: int = FLY_MACHINE_DEFAULT_MEMORY_MB
     kernel_args: Optional[list[str]] = None
@@ -68,8 +70,31 @@ class FlyMachineConfigServices(BaseModel):
     internal_port: int
 
 
+class FlyMachineConfigInit(BaseModel):
+    exec: Optional[str] = None
+    entrypoint: Optional[str] = None
+    cmd: Optional[str] = None
+    tty: Optional[bool] = None
+
+
+class FlyMachineConfigRestart(BaseModel):
+    policy: Optional[str] = None
+
+
+class FlyMachineImageRef(BaseModel):
+    registry: str
+    repository: str
+    tag: str
+    digest: str
+    labels: Optional[dict[str, str]] = None
+
+
 class FlyMachineConfig(BaseModel):
+    env: Optional[dict[str, str]] = None
+    init: Optional[FlyMachineConfigInit] = None
     image: str
+    metadata: Optional[dict[str, str]] = None
+    restart: Optional[FlyMachineConfigRestart] = None
     guest: Optional[FlyMachineConfigGuest] = None
     auto_destroy: Optional[bool] = None
     size: Optional[str] = None
@@ -82,7 +107,26 @@ class FlyMachineConfig(BaseModel):
     checks: Optional[list[FlyMachineConfigHttpCheck | FlyMachineConfigTcpCheck]] = None
 
 
+class FlyMachineEventRequest(BaseModel):
+    exit_event: dict
+    restart_count: int
+
+
+class FlyMachineEvent(BaseModel):
+    type: str
+    status: str
+    request: Optional[FlyMachineEventRequest] = None
+    source: str
+    timestamp: datetime
+
+
 class FlyMachine(BaseModel):
-    name: Optional[str]
-    region: Optional[str]
+    id: Optional[str] = None
+    name: Optional[str] = None
+    state: Optional[str] = None
+    region: Optional[str] = None
+    instance_id: Optional[str] = None
+    private_ip: Optional[str] = None
     config: FlyMachineConfig
+    image_ref: Optional[FlyMachineImageRef] = None
+    created_at: Optional[datetime] = None

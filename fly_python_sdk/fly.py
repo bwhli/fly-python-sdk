@@ -1,47 +1,51 @@
-import os
+import asyncio
+import logging
 
 import httpx
-from pydantic import BaseModel
 
 from fly_python_sdk.exceptions import (
     AppInterfaceError,
     MachineInterfaceError,
+    MachineStateTransitionError,
     MissingMachineIdsError,
 )
-from fly_python_sdk.models.apps import FlyAppCreateRequest, FlyAppDetailsResponse
+from fly_python_sdk.models.apps import FlyAppCreateRequest
 from fly_python_sdk.models.machines import FlyMachine, FlyMachineConfig
 
 
 class Fly:
-    """
-    A class for interacting with the Fly.io platform.
-    """
+    """Client for interacting with the Fly Machines API."""
 
-    def __init__(self, api_token: str) -> None:
+    def __init__(
+        self,
+        api_token: str,
+        base_url: str = "https://api.machines.dev",
+    ):
         self.api_token = api_token
         self.api_version = 1
+        self.base_url = base_url
 
     ########
     # Apps #
     ########
 
-    async def create_app(
+    def create_app(
         self,
         app_name: str,
         org_slug: str,
     ) -> None:
-        """Creates a new app on Fly.io.
+        """Creates a new app on Fly.
 
         Args:
-            app_name: The name of the new Fly.io app.
+            app_name: The name of the new Fly app.
             org_slug: The slug of the organization to create the app within.
         """
-        path = "apps"
+        url_path = "apps"
         app_details = FlyAppCreateRequest(
             app_name=app_name,
             org_slug=org_slug,
         )
-        r = await self._make_api_post_request(path, app_details.dict())
+        r = self._make_api_post_request(url_path, app_details.model_dump())
 
         # Raise an exception if HTTP status code is not 201.
         if r.status_code != 201:
@@ -51,36 +55,147 @@ class Fly:
 
         return FlyMachine(**r.json())
 
-    async def get_app(
+    ############
+    # Machines #
+    ############
+
+    async def create_machine(
         self,
         app_name: str,
-    ) -> FlyAppDetailsResponse:
-        """Returns information about a Fly.io application.
+        config: FlyMachineConfig,
+        name: str = None,
+        region: str = None,
+    ) -> FlyMachine:
+        """Creates a Fly machine.
 
         Args:
-            app_name: The name of the new Fly.io app.
+            app_name: The name of the new Fly app.
+            config: A FlyMachineConfig object containing creation details.
+            name: The name of the machine.
+            region: The deployment region for the machine.
         """
-        path = f"apps/{app_name}"
-        r = await self._make_api_get_request(path)
+        # Create Pydantic model for machine creation requests.
+
+        machine = FlyMachine(
+            name=name,
+            region=region,
+            config=config,
+        )
+
+        r = await self._make_api_post_request(
+            f"apps/{app_name}/machines",
+            payload=machine.model_dump(exclude_none=True),
+        )
 
         # Raise an exception if HTTP status code is not 200.
         if r.status_code != 200:
-            raise AppInterfaceError(message=f"Unable to get {app_name}!")
+            raise MachineInterfaceError(
+                message=f"{r.status_code}: Unable to create machine!"
+            )
 
-        return FlyAppDetailsResponse(**r.json())
+        created_machine = FlyMachine(**r.json())
+
+        await self.wait_machine(app_name, created_machine.id, "started")
+
+        logging.info(f"Machine {created_machine.id} has been created.")
+
+        return created_machine
+
+    async def delete_machine(
+        self,
+        app_name: str,
+        machine_id: str,
+    ) -> None:
+        """Deletes a Fly machine.
+
+        Args:
+            app_name: The name of the new Fly app.
+            machine_id: The id string for a Fly machine.
+        """
+
+        # Fetch the Machine object.
+        machine = await self.get_machine(app_name, machine_id)
+
+        # Stop the machine if it is not already stopped.
+        if machine.state != "stopped":
+            await self.stop_machine(app_name, machine_id)
+
+        r = await self._make_api_delete_request(
+            f"apps/{app_name}/machines/{machine_id}"
+        )
+
+        # Raise an exception if HTTP status code is not 200.
+        if r.status_code != 200:
+            raise MachineInterfaceError(
+                message=f"Unable to delete {machine_id} in {app_name}!"
+            )
+
+        logging.info(f"Machine {machine_id} has been deleted.")
+
+        return
+
+    async def delete_machines(
+        self,
+        app_name: str,
+        machine_ids: list[str] = [],
+        delete_all: bool = False,
+    ) -> None:
+        """Convenince function for deleting multiple Fly machines.
+
+        Args:
+            app_name: The name of the new Fly app.
+            machine_ids: An array of machine IDs to delete.
+            delete_all: Delete all machines in the app if True.
+        """
+        # If delete_all is True, override provided machine_ids.
+        if delete_all is True:
+            machine_ids = await self.list_machines(app_name, ids_only=True)
+            logging.info(f"Machine IDs to delete: {', '.join(machine_ids)}.")
+
+        # Raise an exception if there are no machine IDs to delete.
+        if len(machine_ids) == 0:
+            raise MissingMachineIdsError(
+                "Please provide at least one machine ID to delete."
+            )
+
+        await asyncio.gather(*[self.delete_machine(app_name, id) for id in machine_ids])
+
+        return
+
+    async def get_machine(
+        self,
+        app_name: str,
+        machine_id: str,
+    ) -> FlyMachine:
+        """Returns information about a Fly machine.
+
+        Args:
+            app_name: The name of the new Fly app.
+            machine_id: The id string for a Fly machine.
+        """
+        url_path = f"apps/{app_name}/machines/{machine_id}"
+        r = await self._make_api_get_request(url_path)
+
+        # Raise an exception if HTTP status code is not 200.
+        if r.status_code != 200:
+            raise MachineInterfaceError(
+                message=f"Unable to delete {machine_id} in {app_name}!"
+            )
+
+        return FlyMachine(**r.json())
 
     async def list_machines(
         self,
         app_name: str,
         ids_only: bool = False,
     ) -> list[FlyMachine] | list[str]:
-        """Returns a list of machines that belong to a Fly.io application.
+        """Returns a list of machines that belong to a Fly application.
 
         Args:
             ids_only: If True, only machine IDs will be returned. Defaults to False.
         """
-        path = f"apps/{app_name}/machines"
-        r = await self._make_api_get_request(path)
+        url_path = f"apps/{app_name}/machines"
+        r = await self._make_api_get_request(url_path)
 
         # Raise an exception if HTTP status code is not 200.
         if r.status_code != 200:
@@ -95,143 +210,28 @@ class Fly:
 
         return machines
 
-    ############
-    # Machines #
-    ############
-
-    async def create_machine(
-        self,
-        app_name: str,
-        config: FlyMachineConfig,
-        name: str = None,
-        region: str = None,
-    ):
-        """Creates a Fly.io machine.
-
-        Args:
-            app_name: The name of the new Fly.io app.
-            config: A FlyMachineConfig object containing creation details.
-            name: The name of the machine.
-            region: The deployment region for the machine.
-        """
-        path = f"apps/{app_name}/machines"
-
-        # Create Pydantic model for machine creation requests.
-        fly_machine = FlyMachine(
-            name=name,
-            region=region,
-            config=config,
-        )
-
-        r = await self._make_api_post_request(
-            path,
-            payload=fly_machine.model_dump(exclude_none=True),
-        )
-
-        # Raise an exception if HTTP status code is not 200.
-        if r.status_code != 200:
-            raise MachineInterfaceError(
-                message=f"{r.status_code}: Unable to create machine!"
-            )
-
-        return FlyMachine(**r.json())
-
-    async def delete_machine(
-        self,
-        app_name: str,
-        machine_id: str,
-    ) -> None:
-        """Deletes a Fly.io machine.
-
-        Args:
-            app_name: The name of the new Fly.io app.
-            machine_id: The id string for a Fly.io machine.
-        """
-        path = f"apps/{app_name}/machines/{machine_id}"
-        r = await self._make_api_delete_request(path)
-
-        # Raise an exception if HTTP status code is not 200.
-        if r.status_code != 200:
-            raise MachineInterfaceError(
-                message=f"Unable to delete {machine_id} in {app_name}!"
-            )
-
-        return
-
-    async def delete_machines(
-        self,
-        app_name: str,
-        machine_ids: list[str] = [],
-        delete_all: bool = False,
-    ) -> None:
-        """Deletes multiple Fly.io machines.
-
-        Args:
-            app_name: The name of the new Fly.io app.
-            machine_ids: An array of machine IDs to delete.
-            delete_all: Delete all machines in the app if True.
-        """
-        # If delete_all is True, override provided machine_ids.
-        if delete_all is True:
-            machine_ids = self.list_machines(app_name, ids_only=True)
-
-        # Raise an exception if there are no machine IDs to delete.
-        if len(machine_ids) == 0:
-            raise MissingMachineIdsError(
-                "Please provide at least one machine ID to delete."
-            )
-
-        # Stop machines.
-        for machine_id in machine_ids:
-            self.stop_machine(app_name, machine_id)
-
-        # Delete machines.
-        for machine_id in machine_ids:
-            self.delete_machine(app_name, machine_id)
-
-        return
-
-    async def get_machine(
-        self,
-        app_name: str,
-        machine_id: str,
-    ) -> FlyMachine:
-        """Returns information about a Fly.io machine.
-
-        Args:
-            app_name: The name of the new Fly.io app.
-            machine_id: The id string for a Fly.io machine.
-        """
-        path = f"apps/{app_name}/machines/{machine_id}"
-        r = await self._make_api_get_request(path)
-
-        # Raise an exception if HTTP status code is not 200.
-        if r.status_code != 200:
-            raise MachineInterfaceError(
-                message=f"Unable to delete {machine_id} in {app_name}!"
-            )
-
-        return FlyMachine(**r.json())
-
     async def start_machine(
         self,
         app_name: str,
         machine_id: str,
     ) -> None:
-        """Starts a Fly.io machine.
+        """Starts a Fly machine.
 
         Args:
-            app_name: The name of the new Fly.io app.
-            machine_id: The id string for a Fly.io machine.
+            app_name: The name of the new Fly app.
+            machine_id: The id string for a Fly machine.
         """
-        path = f"apps/{app_name}/machines/{machine_id}/start"
-        r = await self._make_api_post_request(path)
+        r = await self._make_api_post_request(
+            f"apps/{app_name}/machines/{machine_id}/start"
+        )
 
         # Raise an exception if HTTP status code is not 200.
         if r.status_code != 200:
             raise MachineInterfaceError(
                 message=f"Unable to start {machine_id} in {app_name}!"
             )
+
+        await self.wait_machine(app_name, machine_id, "started")
 
         return
 
@@ -240,14 +240,28 @@ class Fly:
         app_name: str,
         machine_id: str,
     ) -> None:
-        """Stop a Fly.io machine.
+        """Stop a Fly machine.
 
         Args:
-            app_name: The name of the new Fly.io app.
-            machine_id: The id string for a Fly.io machine.
+            app_name: The name of the new Fly app.
+            machine_id: The id string for a Fly machine.
         """
-        path = f"apps/{app_name}/machines/{machine_id}/stop"
-        r = await self._make_api_post_request(path)
+        # Wait for the machine to reach "started" state before trying to stop it.
+        # await self.wait_machine(app_name, machine_id, "started")
+
+        # machine = await self.get_machine(app_name, machine_id)
+
+        machine = await self.get_machine(app_name, machine_id)
+
+        # Return if the machine is already stopped.
+        if machine.state == "stopped":
+            return
+
+        logging.info(f"Attemping to stop {machine_id} in {app_name}.")
+
+        r = await self._make_api_post_request(
+            f"apps/{app_name}/machines/{machine_id}/stop"
+        )
 
         # Raise an exception if HTTP status code is not 200.
         if r.status_code != 200:
@@ -255,64 +269,94 @@ class Fly:
                 message=f"Unable to stop {machine_id} in {app_name}!"
             )
 
+        logging.info(f"Stopped {machine_id} in {app_name}.")
+
+        await self.wait_machine(app_name, machine_id, "stopped")
+
         return
 
-    #############
-    # Utilities #
-    #############
+    async def wait_machine(
+        self,
+        app_name: str,
+        machine_id: str,
+        target_state: str,
+        timeout: int = 60,
+    ) -> None:
+        """Waits for a Fly machine to be reach the target state.
+
+        Args:
+            app_name: The name of the new Fly app.
+            machine_id: The id string for a Fly machine.
+            instance_id: The id string for a Fly instance.
+            target_state: The target state for the machine.
+            timeout: The maximum time to wait for the machine to reach the target state.
+        """
+
+        # Fetch the Machine object to get the instance ID.
+        machine = await self.get_machine(app_name, machine_id)
+
+        logging.info(
+            f'Waiting for {machine_id} in {app_name} to reach "{target_state}" state.'
+        )
+
+        r = await self._make_api_get_request(
+            f"apps/{app_name}/machines/{machine_id}/wait?instance_id={machine.instance_id}&state={target_state}&timeout={timeout}"
+        )
+
+        if r.status_code != 200:
+            raise MachineStateTransitionError(
+                message=f'{machine_id} in {app_name} was unable to to reach "{target_state}" state.'
+            )
+
+        logging.info(f'Machine {machine_id} has reached "{target_state}" state.')
+
+        return
 
     async def _make_api_delete_request(
         self,
-        path: str,
+        url_path: str,
     ) -> httpx.Response:
-        """An internal function for making DELETE requests to the Fly.io API."""
-        api_hostname = self._get_api_hostname()
-        url = f"{api_hostname}/v{self.api_version}/{path}"
-        async with httpx.AsyncClient() as client:
-            r = await client.delete(url, headers=self._generate_headers())
-            r.raise_for_status()
+        """An internal function for making DELETE requests to the Fly API."""
+        url = f"{self.base_url}/v{self.api_version}/{url_path}"
+        async with httpx.AsyncClient(timeout=60) as client:
+            r = await client.delete(
+                url,
+                headers=self._generate_headers(),
+            )
         return r
 
     async def _make_api_get_request(
         self,
-        path: str,
+        url_path: str,
     ) -> httpx.Response:
-        """An internal function for making GET requests to the Fly.io API."""
-        api_hostname = self._get_api_hostname()
-        url = f"{api_hostname}/v{self.api_version}/{path}"
-        async with httpx.AsyncClient() as client:
-            r = await client.get(url, headers=self._generate_headers())
-            r.raise_for_status()
+        """An internal function for making GET requests to the Fly API."""
+        url = f"{self.base_url}/v{self.api_version}/{url_path}"
+        async with httpx.AsyncClient(timeout=60) as client:
+            r = await client.get(
+                url,
+                headers=self._generate_headers(),
+            )
         return r
 
     async def _make_api_post_request(
         self,
-        path: str,
+        url_path: str,
         payload: dict = {},
     ) -> httpx.Response:
-        """An internal function for making POST requests to the Fly.io API."""
-        api_hostname = self._get_api_hostname()
-        url = f"{api_hostname}/v{self.api_version}/{path}"
-        async with httpx.AsyncClient() as client:
-            r = await client.post(url, headers=self._generate_headers(), json=payload)
-            r.raise_for_status()
+        """An internal function for making POST requests to the Fly API."""
+        url = f"{self.base_url}/v{self.api_version}/{url_path}"
+        async with httpx.AsyncClient(timeout=60) as client:
+            r = await client.post(
+                url,
+                headers=self._generate_headers(),
+                json=payload,
+            )
         return r
 
     def _generate_headers(self) -> dict:
-        """Returns a dictionary containing headers for requests to the Fly.io API."""
+        """Returns a dictionary containing headers for requests to the Fly API."""
         headers = {
             "Authorization": f"Bearer {self.api_token}",
             "Content-Type": "application/json",
         }
         return headers
-
-    def _get_api_hostname(self) -> str:
-        """Returns the hostname that will be used to connect to the Fly.io API.
-
-        Returns:
-            The hostname that will be used to connect to the Fly.io API.
-            If the FLY_API_HOSTNAME environment variable is not set,
-            the hostname returned will default to https://api.machines.dev.
-        """
-        api_hostname = os.getenv("FLY_API_HOSTNAME", "https://api.machines.dev")
-        return api_hostname

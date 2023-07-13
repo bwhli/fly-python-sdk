@@ -3,6 +3,7 @@ import hashlib
 import logging
 import os
 from datetime import datetime
+from time import sleep
 
 import pytest
 from dotenv import load_dotenv
@@ -25,9 +26,22 @@ async def test_fly_create_machine():
     assert result is not None
 
 
-def test_fly_delete_machines():
-    result = fly.delete_machines("fly-python-sdk", delete_all=True)
+async def test_fly_delete_machines():
+    result = await fly.delete_machines("fly-python-sdk", delete_all=True)
     assert result is None
 
 
+async def test_fly_wait_machine():
+    result = await fly.wait_machine(
+        "fly-python-sdk",
+        "e2865111fe60d8",
+        "stopped",
+    )
+
+
 asyncio.run(test_fly_create_machine())
+asyncio.run(test_fly_create_machine())
+asyncio.run(test_fly_create_machine())
+asyncio.run(test_fly_create_machine())
+sleep(5)
+asyncio.run(test_fly_delete_machines())
