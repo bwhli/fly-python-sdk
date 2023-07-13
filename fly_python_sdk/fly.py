@@ -31,6 +31,13 @@ class Fly:
         base_url: str = FLY_MACHINES_API_DEFAULT_API_HOSTNAME,
         api_timeout: int = DEFAULT_API_TIMEOUT,
     ):
+        """Initializes a new Fly client.
+
+        Args:
+            api_token: The Fly API token to use for authentication. Defaults to the FLY_API_TOKEN environment variable.
+            base_url: The base URL of the Fly Machines API. Defaults to "https://api.machines.dev".
+            api_timeout: The timeout for httx to use when making requests to the Fly Machines API. Default to 60s.
+        """
         if api_token is None:
             raise MissingApiTokenError(
                 message="Specify a valid Fly auth token for api_token, or set the FLY_API_TOKEN environment variable."
