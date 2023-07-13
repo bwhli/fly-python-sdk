@@ -5,12 +5,14 @@ import httpx
 
 from fly_python_sdk.constants import (
     FLY_MACHINE_DEFAULT_WAIT_TIMEOUT,
+    FLY_MACHINE_STATES,
     FLY_MACHINES_API_DEFAULT_API_HOSTNAME,
     FLY_MACHINES_API_VERSION,
 )
 from fly_python_sdk.exceptions import (
     AppInterfaceError,
     MachineInterfaceError,
+    MachineInvalidStateError,
     MachineStateTransitionError,
     MissingMachineIdsError,
 )
@@ -300,6 +302,11 @@ class Fly:
             target_state: The target state for the machine.
             timeout: The maximum time to wait for the machine to reach the target state.
         """
+
+        if target_state not in FLY_MACHINE_STATES:
+            raise MachineInvalidStateError(
+                message=f'"{target_state}" is not a valid machine state.'
+            )
 
         # Fetch the Machine object to get the instance ID.
         machine = await self.get_machine(app_name, machine_id)
