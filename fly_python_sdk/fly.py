@@ -1,9 +1,11 @@
 import asyncio
 import logging
+import os
 
 import httpx
 
 from fly_python_sdk import (
+    DEFAULT_API_TIMEOUT,
     FLY_MACHINE_DEFAULT_WAIT_TIMEOUT,
     FLY_MACHINE_STATES,
     FLY_MACHINES_API_DEFAULT_API_HOSTNAME,
@@ -14,6 +16,7 @@ from fly_python_sdk.exceptions import (
     MachineInterfaceError,
     MachineInvalidStateError,
     MachineStateTransitionError,
+    MissingApiTokenError,
     MissingMachineIdsError,
 )
 from fly_python_sdk.models import FlyAppCreateRequest, FlyMachine, FlyMachineConfig
@@ -24,12 +27,19 @@ class Fly:
 
     def __init__(
         self,
-        api_token: str,
+        api_token: str | None = os.getenv("FLY_API_TOKEN"),
         base_url: str = FLY_MACHINES_API_DEFAULT_API_HOSTNAME,
+        api_timeout: int = DEFAULT_API_TIMEOUT,
     ):
+        if api_token is None:
+            raise MissingApiTokenError(
+                message="Specify a valid Fly auth token for api_token, or set the FLY_API_TOKEN environment variable."
+            )
+
         self.api_token = api_token
         self.api_version = FLY_MACHINES_API_VERSION
         self.base_url = base_url
+        self.api_timeout = api_timeout
 
     ########
     # Apps #
@@ -336,13 +346,17 @@ class Fly:
 
         return
 
+    #####################
+    # Utility Functions #
+    #####################
+
     async def _make_api_delete_request(
         self,
         url_path: str,
     ) -> httpx.Response:
         """An internal function for making DELETE requests to the Fly API."""
         url = f"{self.base_url}/v{self.api_version}/{url_path}"
-        async with httpx.AsyncClient(timeout=60) as client:
+        async with httpx.AsyncClient(timeout=self.api_timeout) as client:
             r = await client.delete(
                 url,
                 headers=self._generate_headers(),
@@ -355,7 +369,7 @@ class Fly:
     ) -> httpx.Response:
         """An internal function for making GET requests to the Fly API."""
         url = f"{self.base_url}/v{self.api_version}/{url_path}"
-        async with httpx.AsyncClient(timeout=60) as client:
+        async with httpx.AsyncClient(timeout=self.api_timeout) as client:
             r = await client.get(
                 url,
                 headers=self._generate_headers(),
@@ -369,7 +383,7 @@ class Fly:
     ) -> httpx.Response:
         """An internal function for making POST requests to the Fly API."""
         url = f"{self.base_url}/v{self.api_version}/{url_path}"
-        async with httpx.AsyncClient(timeout=60) as client:
+        async with httpx.AsyncClient(timeout=self.api_timeout) as client:
             r = await client.post(
                 url,
                 headers=self._generate_headers(),

@@ -9,6 +9,8 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s",
 )
 
+DEFAULT_API_TIMEOUT = 60
+
 FLY_MACHINE_DEFAULT_CPU_COUNT = 1
 FLY_MACHINE_DEFAULT_MEMORY_MB = 256
 FLY_MACHINE_DEFAULT_WAIT_TIMEOUT = 60
