@@ -147,17 +147,17 @@ class Fly:
         self,
         app_name: str,
         machine_ids: list[str] = [],
-        delete_all: bool = False,
+        destroy_all: bool = False,
     ) -> None:
         """Convenince function for destroying multiple Fly machines.
 
         Args:
             app_name: The name of the new Fly app.
             machine_ids: An array of machine IDs to delete.
-            delete_all: Delete all machines in the app if True.
+            destroy_all: Delete all machines in the app if True.
         """
         # If delete_all is True, override provided machine_ids.
-        if delete_all is True:
+        if destroy_all is True:
             machine_ids = await self.list_machines(app_name, ids_only=True)
             logging.info(f"Machine IDs to delete: {', '.join(machine_ids)}.")
 

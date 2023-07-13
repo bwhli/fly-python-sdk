@@ -26,8 +26,8 @@ async def test_fly_create_machine():
     assert result is not None
 
 
-async def test_fly_delete_machines():
-    result = await fly.delete_machines("fly-python-sdk", delete_all=True)
+async def test_fly_destroy_machines():
+    result = await fly.destroy_machines("fly-python-sdk", destroy_all=True)
     assert result is None
 
 
@@ -44,4 +44,4 @@ asyncio.run(test_fly_create_machine())
 asyncio.run(test_fly_create_machine())
 asyncio.run(test_fly_create_machine())
 sleep(5)
-asyncio.run(test_fly_delete_machines())
+asyncio.run(test_fly_destroy_machines())
