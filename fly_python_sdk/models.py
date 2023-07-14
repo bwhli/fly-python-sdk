@@ -143,3 +143,4 @@ class FlyMachine(BaseModel):
     config: FlyMachineConfig
     image_ref: Optional[FlyMachineImageRef] = None
     created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None

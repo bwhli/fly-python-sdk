@@ -1,0 +1,139 @@
+<div id="machines-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+    {% for machine in machines %}
+    <div class="bg-gray-900 border border-gray-800 rounded-lg flex flex-col gap-4 p-4">
+        <header class="flex justify-between">
+            <div class="flex flex-col">
+                <p class="text-gray-400 font-mono text-sm">{{ machine.id }}</p>
+                <p class="text-gray-400 font-mono text-sm">{{ machine.instance_id }}</p>
+                <h4 class="text-2xl font-bold">{{ machine.name }}</h4>
+            </div>
+            {% if machine.state in ["created", "starting", "started"] %}
+            {% set bg_color = "green" %}
+            {% elif machine.state == "replacing" %}
+            {% set bg_color = "yellow" %}
+            {% elif machine.state in ["stopping", "stopped"] %}
+            {% set bg_color = "orange" %}
+            {% elif machine.state in ["destroying", "destroyed"] %}
+            {% set bg_color = "red" %}
+            {% endif %}
+            <p class="bg-{{ bg_color }}-700 font-bold text-sm rounded-md h-fit px-2 py-1 uppercase">
+                {{ machine.state }}
+            </p>
+        </header>
+
+        <div id="state-change-buttons" class="flex gap-4">
+            {% for state in [("start", "green"), ("stop", "orange"), ("destroy", "red")] %}
+            <button hx-post="/api/machines/{{ machine.id }}/{{ state[0] }}"
+                class="bg-{{state[1]}}-700 hover:bg-{{state[1]}}-900 uppercase text-sm font-bold rounded-md px-3 py-1.5">
+                {{ state[0] }}
+            </button>
+            {% endfor %}
+        </div>
+
+        <div class="flex flex-col gap-2 bg-gray-800 p-4 rounded-md border border-gray-700">
+            <h2 class="text-xl font-bold">Overview</h2>
+            <hr class="border-gray-700" />
+            <div class="overflow-x-auto">
+                <table class="text-left table-auto">
+                    <tr class="font-mono">
+                        <td class="pr-8 font-semibold whitespace-nowrap">Region</td>
+                        <td class="whitespace-nowrap">{{ machine.region }}</td>
+                    </tr>
+                    <tr class="font-mono">
+                        <td class="pr-8 font-semibold whitespace-nowrap">Private IP</td>
+                        <td class="whitespace-nowrap">
+                            {{ machine.private_ip }}
+                        </td>
+                    </tr>
+                    <tr class="font-mono">
+                        <td class="pr-8 font-semibold whitespace-nowrap">CPU</td>
+                        <td class="whitespace-nowrap">
+                            {{ machine.config.guest.cpus }} CPUs ({{ machine.config.guest.cpu_kind }})
+                        </td>
+                    </tr>
+                    <tr class="font-mono">
+                        <td class="pr-8 font-semibold whitespace-nowrap">Memory (MB)</td>
+                        <td class="whitespace-nowrap">
+                            {{ machine.config.guest.memory_mb }}</td>
+                    </tr>
+                    <tr class="font-mono">
+                        <td class="pr-8 font-semibold whitespace-nowrap">Created At</td>
+                        <td class="whitespace-nowrap">{{ machine.created_at }}</td>
+                    </tr>
+                    <tr class="font-mono">
+                        <td class="pr-8 font-semibold whitespace-nowrap">Updated At</td>
+                        <td class="whitespace-nowrap">{{ machine.updated_at }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="flex flex-col gap-2 bg-gray-800 p-4 rounded-md border border-gray-700">
+            <header class="flex justify-between items-center">
+                <h2 class="text-xl font-bold">Image</h2>
+                <button _="on click toggle .hidden on .machine-image-details then toggle .rotate-180 on me">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                        stroke="currentColor" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                    </svg>
+                </button>
+            </header>
+            <div id="machine-image-details-{{ machine.id }}" class="machine-image-details flex flex-col gap-4 hidden">
+                <hr class="border-gray-700" />
+                <div class="overflow-x-auto">
+                    <table class="text-left">
+                        {% for attribute_key in ["registry", "repository", "tag"] %}
+                        <tr class="font-mono">
+                            <td
+                                class="pr-4 sm:pr-6 md:pr-8 z-10 bg-gray-800 sticky left-0 font-semibold whitespace-nowrap">
+                                {{ attribute_key|title }}
+                            </td>
+                            <td class="whitespace-nowrap">
+                                {{ machine.image_ref[attribute_key] }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex flex-col gap-2 bg-gray-800 p-4 rounded-md border border-gray-700">
+            <header class="flex justify-between items-center">
+                <h2 class="text-xl font-bold">Release</h2>
+                <button _="on click toggle .hidden on .machine-release-details then toggle .rotate-180 on me">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                        stroke="currentColor" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                    </svg>
+                </button>
+            </header>
+            <div id="machine-release-details-{{ machine.id }}"
+                class="machine-release-details flex flex-col gap-4 hidden transform">
+                <hr class="border-gray-700" />
+                <div class="overflow-x-auto">
+                    <table class="text-left">
+                        <tr class="font-mono">
+                            <td class="pr-8 font-semibold whitespace-nowrap">Release Version</td>
+                            <td class="whitespace-nowrap">
+                                v{{ machine.config.metadata.fly_release_version }}</td>
+                        </tr>
+                        <tr class="font-mono">
+                            <td class="pr-8 font-semibold whitespace-nowrap">Release ID</td>
+                            <td class="whitespace-nowrap">
+                                v{{ machine.config.metadata.fly_release_id }}</td>
+                        </tr>
+                        <tr class="font-mono">
+                            <td class="pr-8 font-semibold whitespace-nowrap">flyctl Version</td>
+                            <td class="whitespace-nowrap">
+                                v{{ machine.config.metadata.fly_flyctl_version }}
+                            </td>
+                        </tr>
+                    </table>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
