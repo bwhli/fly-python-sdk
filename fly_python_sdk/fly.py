@@ -3,6 +3,7 @@ import logging
 import os
 
 import httpx
+from rich import print
 
 from fly_python_sdk import (
     DEFAULT_API_TIMEOUT,
@@ -27,14 +28,14 @@ class Fly:
 
     def __init__(
         self,
-        api_token: str | None = os.getenv("FLY_API_TOKEN"),
+        api_token: str,
         base_url: str = FLY_MACHINES_API_DEFAULT_API_HOSTNAME,
         api_timeout: int = DEFAULT_API_TIMEOUT,
     ):
         """Initializes a new Fly client.
 
         Args:
-            api_token: The Fly API token to use for authentication. Defaults to the FLY_API_TOKEN environment variable.
+            api_token: The Fly API token to use for authentication.
             base_url: The base URL of the Fly Machines API. Defaults to "https://api.machines.dev".
             api_timeout: The timeout for httx to use when making requests to the Fly Machines API. Default to 60s.
         """
@@ -235,6 +236,8 @@ class Fly:
         # Raise an exception if HTTP status code is not 200.
         if r.status_code != 200:
             raise AppInterfaceError(message=f"Unable to get machines in {app_name}!")
+
+        print(r.json())
 
         # Create a FlyMachine object for each machine.
         machines = [FlyMachine(**machine) for machine in r.json()]

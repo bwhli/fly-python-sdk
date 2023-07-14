@@ -19,6 +19,7 @@ ruff = "^0.0.243"
 python-dotenv = "^0.21.1"
 pytest = "^7.2.1"
 flit = "^3.8.0"
+rich = "^13.4.2"
 
 [build-system]
 requires = ["poetry-core"]

@@ -25,15 +25,15 @@ class FlyAppDetailsResponse(BaseModel):
 class FlyMachineConfigTcpCheck(BaseModel):
     type: str = "tcp"
     port: int
-    interval: int
-    timeout: int
+    interval: int | str
+    timeout: int | str
 
 
 class FlyMachineConfigHttpCheck(BaseModel):
     type: str = "http"
     port: int
-    interval: int
-    timeout: int
+    interval: int | str
+    timeout: int | str
     method: str = "GET"
     path: str
     protocol: str = "http"
@@ -117,7 +117,7 @@ class FlyMachineConfig(BaseModel):
     schedule: Optional[str] = None
     mounts: Optional[FlyMachineConfigMount] = None
     metrics: Optional[FlyMachineConfigMetrics] = None
-    checks: Optional[list[FlyMachineConfigHttpCheck | FlyMachineConfigTcpCheck]] = None
+    checks: Optional[dict[str, FlyMachineConfigHttpCheck | FlyMachineConfigTcpCheck]] = None  # fmt: skip
 
 
 class FlyMachineEventRequest(BaseModel):

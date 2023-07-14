@@ -7,10 +7,106 @@
         <script src="https://cdn.tailwindcss.com"></script>
     </head>
 
-    <body>
-        <h1 class="text-3xl font-bold underline">
-            Hello world!
-        </h1>
+    <body class="bg-black text-gray-200">
+        <div id="container" class="p-4">
+            <div id="app" class="flex flex-col gap-8">
+                <h1 class="text-4xl font-bold">{{ app_name }}</h1>
+                <div id="machines-grid" class="grid grid-cols-4 gap-4">
+                    {% for machine in machines %}
+                    <div class="bg-gray-900 border border-gray-800 rounded-lg flex flex-col gap-4 p-4">
+                        <header class="flex justify-between">
+                            <div class="flex flex-col">
+                                <p class="text-gray-400 font-mono text-sm">{{ machine.region }}:{{ machine.id }}</p>
+                                <p class="text-gray-400 font-mono text-sm">{{ machine.instance_id }}</p>
+                                <h3 class="text-2xl font-bold">{{ machine.name }}
+                            </div>
+                            <p class="bg-green-700 font-bold text-sm rounded-md h-fit px-2 py-1">
+                                {{ machine.state }}
+                            </p>
+                        </header>
+
+                        <div class="flex flex-col gap-2 bg-gray-800 p-4 rounded-md border border-gray-700">
+                            <h2 class="text-xl font-bold">Overview</h2>
+                            <hr class="border-gray-700" />
+                            <table class="text-left overflow-scroll">
+                                <tr class="font-mono">
+                                    <td class="font-semibold w-auto whitespace-nowrap">Region</td>
+                                    <td class="pl-8 whitespace-nowrap">{{ machine.region }}</td>
+                                </tr>
+                                <tr class="font-mono">
+                                    <td class="font-semibold w-auto whitespace-nowrap">Private IP</td>
+                                    <td class="pl-8 whitespace-nowrap">{{ machine.private_ip }}</td>
+                                </tr>
+                                <tr class="font-mono">
+                                    <td class="font-semibold w-auto whitespace-nowrap">CPU</td>
+                                    <td class="pl-8 whitespace-nowrap">
+                                        {{ machine.config.guest.cpus }} CPUs ({{ machine.config.guest.cpu_kind }})
+                                    </td>
+                                </tr>
+                                <tr class="font-mono">
+                                    <td class="font-semibold w-auto whitespace-nowrap">Memory (MB)</td>
+                                    <td class="pl-8 whitespace-nowrap">{{ machine.config.guest.memory_mb }}</td>
+                                </tr>
+                                <tr class="font-mono">
+                                    <td class="font-semibold w-auto whitespace-nowrap">Created At</td>
+                                    <td class="pl-8 whitespace-nowrap">{{ machine.created_at }}</td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <div class="flex flex-col gap-2 bg-gray-800 p-4 rounded-md border border-gray-700">
+                            <h2 class="text-xl font-bold">Image</h2>
+                            <hr class="border-gray-700" />
+                            <table class="text-left overflow-scroll">
+                                {% for attribute_key in ["registry", "repository", "tag"] %}
+                                <tr class="font-mono">
+                                    <td class="font-semibold w-auto whitespace-nowrap">{{ attribute_key|title }}</td>
+                                    <td class="pl-8 whitespace-nowrap">
+                                        {{ machine.image_ref[attribute_key] }}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </table>
+                        </div>
+
+                        <div class="flex flex-col gap-2 bg-gray-800 p-4 rounded-md border border-gray-700">
+                            <h2 class="text-xl font-bold">Release</h2>
+                            <hr class="border-gray-700" />
+                            <table class="text-left overflow-scroll">
+                                <tr class="font-mono">
+                                    <td class="font-semibold w-auto whitespace-nowrap">Release Version</td>
+                                    <td class="pl-8 whitespace-nowrap">
+                                        v{{ machine.config.metadata.fly_release_version }}</td>
+                                </tr>
+                                <tr class="font-mono">
+                                    <td class="font-semibold w-auto whitespace-nowrap">Release ID</td>
+                                    <td class="pl-8 whitespace-nowrap">
+                                        v{{ machine.config.metadata.fly_release_id }}</td>
+                                </tr>
+                                <tr class="font-mono">
+                                    <td class="font-semibold w-auto whitespace-nowrap">flyctl Version</td>
+                                    <td class="pl-8 whitespace-nowrap">
+                                        v{{ machine.config.metadata.fly_flyctl_version }}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="flex gap-4">
+                            <button class="bg-green-700 font-bold rounded-md px-4 py-2">
+                                Start
+                            </button>
+                            <button class="bg-orange-700 font-bold rounded-md px-4 py-2">
+                                Stop
+                            </button>
+                            <button class="bg-red-700 font-bold rounded-md px-4 py-2">
+                                Destroy
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
     </body>
 
 </html>
