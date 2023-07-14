@@ -44,7 +44,7 @@ async def htmx_get_machines_in_app(
 
     fly = Fly(os.environ["FLY_API_TOKEN"])
 
-    machines = await fly.list_machines("nozomi-world-app-production")
+    machines = await fly.list_machines(app_name)
     machines.sort(key=lambda m: getattr(m, sort_by))
 
     return templates.TemplateResponse(
