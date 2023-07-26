@@ -20,7 +20,13 @@ from fly_python_sdk.exceptions import (
     MissingApiTokenError,
     MissingMachineIdsError,
 )
-from fly_python_sdk.models import FlyAppCreateRequest, FlyMachine, FlyMachineConfig
+from fly_python_sdk.models import (
+    FlyApp,
+    FlyAppCreateRequest,
+    FlyApps,
+    FlyMachine,
+    FlyMachineConfig,
+)
 
 
 class Fly:
@@ -54,10 +60,11 @@ class Fly:
     # Apps #
     ########
 
-    def create_app(
+    async def create_app(
         self,
         app_name: str,
-        org_slug: str,
+        network: str = "default",
+        org_slug: str = "personal",
     ) -> None:
         """Creates a new app on Fly.
 
@@ -65,20 +72,85 @@ class Fly:
             app_name: The name of the new Fly app.
             org_slug: The slug of the organization to create the app within.
         """
-        url_path = "apps"
         app_details = FlyAppCreateRequest(
             app_name=app_name,
+            network=network,
             org_slug=org_slug,
         )
-        r = self._make_api_post_request(url_path, app_details.model_dump())
 
-        # Raise an exception if HTTP status code is not 201.
+        r = await self._make_api_post_request("apps", app_details.model_dump())
+
         if r.status_code != 201:
             raise AppInterfaceError(
-                message=f"Unable to create {app_name} in {org_slug}!"
+                message=f"Unable to create {app_name} in {org_slug}."
             )
 
-        return FlyMachine(**r.json())
+        return
+
+    async def delete_app(
+        self,
+        app_name: str,
+    ):
+        """
+        Deletes a Fly app.
+
+        Args:
+            app_name (str): The name of the app to delete.
+        """
+        r = await self._make_api_delete_request(f"apps/{app_name}")
+
+        if r.status_code != 202:
+            raise AppInterfaceError(message=f"Could not delete {app_name}.")
+
+        return
+
+    async def get_app(
+        self,
+        app_name: str,
+    ):
+        r = await self._make_api_get_request(f"apps/{app_name}")
+
+        if r.status_code != 200:
+            raise AppInterfaceError(message=f"Could not find {app_name}.")
+
+        return FlyApp(**r.json())
+
+    async def get_apps(
+        self,
+        org_slug: str = "personal",
+        sort_by: str = "name",
+    ):
+        """
+        Returns a list of apps that belong to a Fly organization.
+
+        Args:
+            org_slug (str): The slug of the organization to create the app within.
+            sort_by (str): The field to sort the list of apps by.
+                Valid values are "machine_count", "name", and "network".
+                Defaults to "name".
+        """
+        if sort_by not in ["machine_count", "name", "network"]:
+            raise Exception(
+                "Invalid sort_by value. Valid sort_by values are 'machine_count', 'name', and 'network'."
+            )
+
+        r = await self._make_api_get_request(f"apps?org_slug={org_slug}")
+
+        if r.status_code != 200:
+            raise AppInterfaceError(
+                message=f"Could not find apps in the {org_slug} organization."
+            )
+
+        apps = FlyApps(**r.json())
+        apps.apps = sorted(
+            apps.apps,
+            key=lambda app: getattr(
+                app,
+                sort_by,
+            ),
+        )
+
+        return apps
 
     ############
     # Machines #
