@@ -7,7 +7,7 @@ if TYPE_CHECKING:
 class FlyMachine:
     def __init__(
         self,
-        app: FlyApp,
+        app: "FlyApp",
         machine_config,
     ):
         self.app = app

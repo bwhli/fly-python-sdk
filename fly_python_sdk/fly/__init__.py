@@ -1,4 +1,10 @@
-from fly_python_sdk import DEFAULT_API_TIMEOUT, FLY_MACHINES_API_DEFAULT_API_HOSTNAME
+import httpx
+
+from fly_python_sdk import (
+    DEFAULT_API_TIMEOUT,
+    FLY_MACHINES_API_DEFAULT_API_HOSTNAME,
+    FLY_MACHINES_API_VERSION,
+)
 from fly_python_sdk.fly.apps import FlyApp
 
 
@@ -6,12 +12,65 @@ class Fly:
     def __init__(
         self,
         api_token: str,
-        base_url: str = FLY_MACHINES_API_DEFAULT_API_HOSTNAME,
         api_timeout: int = DEFAULT_API_TIMEOUT,
+        api_version: int = FLY_MACHINES_API_VERSION,
+        base_url: str = FLY_MACHINES_API_DEFAULT_API_HOSTNAME,
     ):
         self.api_token = api_token
-        self.base_url = base_url
         self.api_timeout = api_timeout
+        self.api_version = api_version
+        self.base_url = base_url
 
     def FlyApp(self, app_name):
         return FlyApp(self, app_name)
+
+    async def _make_api_delete_request(
+        self,
+        url_path: str,
+    ) -> httpx.Response:
+        """An internal function for making DELETE requests to the Fly API."""
+        url = f"{self.base_url}/v{self.api_version}/{url_path}"
+        async with httpx.AsyncClient(timeout=self.api_timeout) as client:
+            r = await client.delete(
+                url,
+                headers=self._generate_headers(),
+            )
+        return r
+
+    async def _make_api_get_request(
+        self,
+        url_path: str,
+    ) -> httpx.Response:
+        """An internal function for making GET requests to the Fly API."""
+        url = f"{self.base_url}/v{self.api_version}/{url_path}"
+        async with httpx.AsyncClient(timeout=self.api_timeout) as client:
+            r = await client.get(
+                url,
+                headers=self._generate_headers(),
+            )
+        return r
+
+    async def _make_api_post_request(
+        self,
+        url_path: str,
+        payload: dict = {},
+    ) -> httpx.Response:
+        """An internal function for making POST requests to the Fly API."""
+        url = f"{self.base_url}/v{self.api_version}/{url_path}"
+        async with httpx.AsyncClient(timeout=self.api_timeout) as client:
+            r = await client.post(
+                url,
+                headers=self._generate_headers(),
+                json=payload,
+            )
+        return r
+
+    def _generate_headers(
+        self,
+    ) -> dict:
+        """Returns a dictionary containing headers for requests to the Fly API."""
+        headers = {
+            "Authorization": f"Bearer {self.api_token}",
+            "Content-Type": "application/json",
+        }
+        return headers
