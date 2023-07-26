@@ -6,7 +6,7 @@ from time import time
 from dotenv import load_dotenv
 from rich import print
 
-from fly_python_sdk.fly import Fly
+from fly_python_sdk.fly_old import Fly
 
 load_dotenv()
 
