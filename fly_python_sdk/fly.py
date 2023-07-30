@@ -47,7 +47,9 @@ class Fly:
     ) -> httpx.Response:
         """An internal function for making DELETE requests to the Fly API."""
         url = f"{self.base_url}/v{self.api_version}/{url_path}"
-        async with httpx.AsyncClient(timeout=self.api_timeout) as client:
+        async with httpx.AsyncClient(
+            timeout=self.api_timeout,
+        ) as client:
             r = await client.delete(
                 url,
                 headers=self._generate_headers(),
@@ -60,7 +62,9 @@ class Fly:
     ) -> httpx.Response:
         """An internal function for making GET requests to the Fly API."""
         url = f"{self.base_url}/v{self.api_version}/{url_path}"
-        async with httpx.AsyncClient(timeout=self.api_timeout) as client:
+        async with httpx.AsyncClient(
+            timeout=self.api_timeout,
+        ) as client:
             r = await client.get(
                 url,
                 headers=self._generate_headers(),
@@ -74,7 +78,9 @@ class Fly:
     ) -> httpx.Response:
         """An internal function for making POST requests to the Fly API."""
         url = f"{self.base_url}/v{self.api_version}/{url_path}"
-        async with httpx.AsyncClient(timeout=self.api_timeout) as client:
+        async with httpx.AsyncClient(
+            timeout=self.api_timeout,
+        ) as client:
             r = await client.post(
                 url,
                 headers=self._generate_headers(),
