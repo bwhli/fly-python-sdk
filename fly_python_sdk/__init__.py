@@ -29,35 +29,39 @@ FLY_MACHINE_STATES = [
     "destroyed",
 ]
 
-FLY_REGIONS = [
+FLY_REGIONS = regions = [
     "ams",  # Amsterdam, Netherlands
     "arn",  # Stockholm, Sweden
+    "atl",  # Atlanta, Georgia (US)
     "bog",  # Bogotá, Colombia
     "bos",  # Boston, Massachusetts (US)
+    "bom",  # Mumbai, India
     "cdg",  # Paris, France
     "den",  # Denver, Colorado (US)
     "dfw",  # Dallas, Texas (US)
+    "eze",  # Ezeiza, Argentina
     "ewr",  # Secaucus, NJ (US)
     "fra",  # Frankfurt, Germany
     "gdl",  # Guadalajara, Mexico
     "gig",  # Rio de Janeiro, Brazil
-    "gru",  # São Paulo
+    "gru",  # Sao Paulo, Brazil
     "hkg",  # Hong Kong, Hong Kong
     "iad",  # Ashburn, Virginia (US)
     "jnb",  # Johannesburg, South Africa
-    "lax",  # Los Angeles, California (US
+    "lax",  # Los Angeles, California (US)
     "lhr",  # London, United Kingdom
-    "maa",  # Chennai (Madras), India
     "mad",  # Madrid, Spain
+    "maa",  # Chennai (Madras), India
     "mia",  # Miami, Florida (US)
     "nrt",  # Tokyo, Japan
     "ord",  # Chicago, Illinois (US)
     "otp",  # Bucharest, Romania
+    "phx",  # Phoenix, Arizona (US)
     "qro",  # Querétaro, Mexico
-    "scl",  # Santiago, Chile
     "sea",  # Seattle, Washington (US)
     "sin",  # Singapore, Singapore
     "sjc",  # San Jose, California (US)
+    "scl",  # Santiago, Chile
     "syd",  # Sydney, Australia
     "waw",  # Warsaw, Poland
     "yul",  # Montreal, Canada
