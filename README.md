@@ -17,12 +17,14 @@ from fly_python_sdk.fly import Fly
 
 fly = Fly("FLY_API_TOKEN")
 
+# List all apps in an organization.
+asyncio.run(fly.Org("org-slug").list_apps())
+
 # Create an app.
-asyncio.run(fly.create_app("app-name"))
+asyncio.run(fly.Org("org-slug).App("app-name).create())
 
 # Fetch details about an app.
-asyncio.run(fly.get_app("app-name"))
+asyncio.run(fly.Org("org-slug).App("app-name).inspect())
 
-# List all apps in an organization.
-asyncio.run(fly.get_apps("org-slug"))
+
 ```
