@@ -8,14 +8,14 @@ from fly_python_sdk import FLY_MACHINE_DEFAULT_CPU_COUNT, FLY_MACHINE_DEFAULT_ME
 # Apps
 
 
-class FlyAppOrganization(BaseModel):
+class FlyOrg(BaseModel):
     name: str
     slug: str
 
 
 class FlyApp(BaseModel):
     name: str
-    organization: FlyAppOrganization
+    organization: FlyOrg
     status: str
 
 

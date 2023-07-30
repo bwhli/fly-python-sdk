@@ -269,56 +269,6 @@ class Fly:
 
         return
 
-    async def get_machine(
-        self,
-        app_name: str,
-        machine_id: str,
-    ) -> FlyMachine:
-        """Returns information about a Fly machine.
-
-        Args:
-            app_name: The name of the new Fly app.
-            machine_id: The id string for a Fly machine.
-        """
-        url_path = f"apps/{app_name}/machines/{machine_id}"
-        r = await self._make_api_get_request(url_path)
-
-        # Raise an exception if HTTP status code is not 200.
-        if r.status_code != 200:
-            raise MachineInterfaceError(
-                message=f"Unable to delete {machine_id} in {app_name}!"
-            )
-
-        return FlyMachine(**r.json())
-
-    async def list_machines(
-        self,
-        app_name: str,
-        ids_only: bool = False,
-    ) -> list[FlyMachine] | list[str]:
-        """Returns a list of machines that belong to a Fly application.
-
-        Args:
-            ids_only: If True, only machine IDs will be returned. Defaults to False.
-        """
-        url_path = f"apps/{app_name}/machines"
-        r = await self._make_api_get_request(url_path)
-
-        # Raise an exception if HTTP status code is not 200.
-        if r.status_code != 200:
-            raise AppInterfaceError(message=f"Unable to get machines in {app_name}!")
-
-        print(r.json())
-
-        # Create a FlyMachine object for each machine.
-        machines = [FlyMachine(**machine) for machine in r.json()]
-
-        # Filter and return a list of ids if ids_only is True.
-        if ids_only is True:
-            return [machine.id for machine in machines]
-
-        return machines
-
     async def start_machine(
         self,
         app_name: str,
