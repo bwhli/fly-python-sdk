@@ -235,7 +235,8 @@ class App(Fly):
 
     async def list_machines(
         self,
-        regions: list[str] = [],
+        include_deleted: bool = False,
+        region: Optional[str] = None,
         ids_only: bool = False,
     ) -> list[FlyMachine] | list[str]:
         """Returns a list of machines that belong to a Fly application.
@@ -243,7 +244,11 @@ class App(Fly):
         Args:
             ids_only: If True, only machine IDs will be returned. Defaults to False.
         """
-        url_path = f"apps/{self.app_name}/machines"
+        url_path = f"apps/{self.app_name}/machines?include_deleted={include_deleted}"
+
+        if region is not None:
+            url_path.append(f"&region={region}")
+
         r = await self._make_api_get_request(url_path)
 
         # Raise an exception if HTTP status code is not 200.
@@ -252,10 +257,6 @@ class App(Fly):
 
         # Create a FlyMachine object for each machine.
         machines = [FlyMachine(**machine) for machine in r.json()]
-
-        # Filter regions as needed.
-        if len(regions) > 0:
-            machines = [machine for machine in machines if machine.region in regions]
 
         # Filter and return a list of ids if ids_only is True.
         if ids_only is True:
