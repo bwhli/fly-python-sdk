@@ -1,5 +1,7 @@
 # Fly.io Python SDK (Unofficial)
 
+The `fly-python-sdk` library is an unofficial Python API wrapper for [Fly.io's Machines API](https://docs.machines.dev).
+
 ## Installation
 
 ```
