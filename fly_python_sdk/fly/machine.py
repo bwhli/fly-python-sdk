@@ -69,15 +69,14 @@ class Machine(FlyApi):
 
         return created_machine
 
-    async def destroy_machine(
+    async def destroy(
         self,
-        wait_for_detroyed_state: bool = True,
+        wait_for_target_state: bool = True,
     ) -> None:
         """Destroys a Fly machine.
 
         Args:
-            app_name: The name of the new Fly app.
-            machine_id: The id string for a Fly machine.
+            wait_for_target_state (bool): If True, the function will wait for the machine to enter the "destroyed" state before returning. Defaults to True.
         """
         if not self.machine_id:
             raise Exception(message="Please provide the ID of the Machine to destroy.")
@@ -107,7 +106,7 @@ class Machine(FlyApi):
         logging.info(f"Machine {self.machine_id} has been deleted.")
 
         # Wait for the machine to enter the "destroyed" state.
-        if wait_for_detroyed_state is True:
+        if wait_for_target_state is True:
             await self.wait_machine(
                 self.app_name,
                 self.machine_id,
@@ -141,7 +140,7 @@ class Machine(FlyApi):
 
         return FlyMachine(**r.json())
 
-    async def start_machine(
+    async def start(
         self,
         wait_for_started_state: bool = True,
     ) -> None:
@@ -166,7 +165,7 @@ class Machine(FlyApi):
 
         return
 
-    async def stop_machine(
+    async def stop(
         self,
     ) -> None:
         """Stop a Fly machine.
