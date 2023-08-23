@@ -1,3 +1,4 @@
+import logging
 
 import httpx
 
@@ -9,6 +10,10 @@ from fly_python_sdk import (
 
 
 class FlyApi:
+    """
+    A class for interacting with the Fly Machines API (docs.machines.dev).
+    """
+
     def __init__(
         self,
         api_token,
@@ -25,13 +30,12 @@ class FlyApi:
         self,
         url_path: str,
     ) -> httpx.Response:
-        """An internal function for making DELETE requests to the Fly API."""
-        url = f"{self.base_url}/v{self.api_version}/{url_path}"
+        """An internal function for making DELETE requests to the Fly Machines API."""
         async with httpx.AsyncClient(
             timeout=self.api_timeout,
         ) as client:
             r = await client.delete(
-                url,
+                f"{self.base_url}/v{self.api_version}/{url_path}",
                 headers=self._generate_headers(),
             )
         return r
@@ -40,13 +44,12 @@ class FlyApi:
         self,
         url_path: str,
     ) -> httpx.Response:
-        """An internal function for making GET requests to the Fly API."""
-        url = f"{self.base_url}/v{self.api_version}/{url_path}"
+        """An internal function for making GET requests to the Fly Machines API."""
         async with httpx.AsyncClient(
             timeout=self.api_timeout,
         ) as client:
-            r = await client.get(
-                url,
+            r = await client.inspect(
+                f"{self.base_url}/v{self.api_version}/{url_path}",
                 headers=self._generate_headers(),
             )
         return r
@@ -56,13 +59,12 @@ class FlyApi:
         url_path: str,
         payload: dict = {},
     ) -> httpx.Response:
-        """An internal function for making POST requests to the Fly API."""
-        url = f"{self.base_url}/v{self.api_version}/{url_path}"
+        """An internal function for making POST requests to the Fly Machines API."""
         async with httpx.AsyncClient(
             timeout=self.api_timeout,
         ) as client:
             r = await client.post(
-                url,
+                f"{self.base_url}/v{self.api_version}/{url_path}",
                 headers=self._generate_headers(),
                 json=payload,
             )
@@ -71,7 +73,7 @@ class FlyApi:
     def _generate_headers(
         self,
     ) -> dict:
-        """Returns a dictionary containing headers for requests to the Fly API."""
+        """Returns a dictionary containing headers for requests to the Fly Machines API."""
         headers = {
             "Authorization": f"Bearer {self.api_token}",
             "Content-Type": "application/json",

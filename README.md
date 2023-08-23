@@ -16,15 +16,30 @@ import asyncio
 from fly_python_sdk.fly import Fly
 
 fly = Fly("FLY_API_TOKEN")
+```
 
-# List all apps in an organization.
-asyncio.run(fly.Org("org-slug").list_apps())
+### Orgs
 
-# Create an app.
-asyncio.run(fly.Org("org-slug").App("app-name").create())
+#### Create a Fly App
 
-# Fetch details about an app.
-asyncio.run(fly.Org("org-slug").App("app-name").inspect())
+```
+import asyncio
 
+from fly_python_sdk.fly import Fly
 
+fly = Fly("FLY_API_TOKEN")
+
+asyncio.run(fly.Org("my-org").create_app(app_name="fly-away"))
+```
+
+#### List Fly Apps
+
+```
+import asyncio
+
+from fly_python_sdk.fly import Fly
+
+fly = Fly("FLY_API_TOKEN")
+
+asyncio.run(fly.Org("my-org").list_apps())
 ```

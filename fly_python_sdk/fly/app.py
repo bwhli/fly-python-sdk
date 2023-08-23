@@ -1,15 +1,16 @@
-
+import logging
 
 from fly_python_sdk.fly.api import FlyApi
 from fly_python_sdk.fly.machine import Machine
-from fly_python_sdk.models import (
-    FlyApp,
-    FlyAppCreateRequest,
-    FlyMachine,
-)
+from fly_python_sdk.fly.volume import Volume
+from fly_python_sdk.models import FlyApp, FlyMachine, FlyMachineConfig
 
 
 class App(FlyApi):
+    """
+    A class for interacting with Fly.io Apps.
+    """
+
     def __init__(
         self,
         api_token,
@@ -20,43 +21,9 @@ class App(FlyApi):
         self.org_slug = org_slug
         self.app_name = app_name
 
-    def Machine(
-        self,
-        machine_id: str,
-    ) -> "Machine":
-        return Machine(
-            api_token=self.api_token,
-            org_slug=self.org_slug,
-            app_name=self.app_name,
-            machine_id=machine_id,
-        )
-
-    async def create(
-        self,
-        network: str = "default",
-        org_slug: str = "personal",
-    ):
-        """Creates a new app on Fly.
-
-        Args:
-            app_name: The name of the new Fly app.
-            org_slug: The slug of the organization to create the app within.
-        """
-        app_details = FlyAppCreateRequest(
-            app_name=self.app_name,
-            network=network,
-            org_slug=org_slug,
-        )
-
-        r = await self._make_api_post_request(
-            "apps",
-            app_details.model_dump(),
-        )
-
-        if r.status_code != 201:
-            raise Exception(message=f"Unable to create {self.app_name} in {org_slug}.")
-
-        return
+    ###################
+    # App Methods #
+    ###################
 
     async def delete(
         self,
@@ -81,6 +48,45 @@ class App(FlyApi):
 
         return FlyApp(**r.json())
 
+    ###################
+    # Machine Methods #
+    ###################
+
+    async def create_machine(
+        self,
+        config: FlyMachineConfig,
+        name: str = None,
+        region: str = None,
+    ) -> FlyMachine | str:
+        """Creates a Fly machine.
+
+        Args:
+            app_name: The name of the new Fly app.
+            config: A FlyMachineConfig object containing creation details.
+            name: The name of the machine.
+            region: The deployment region for the machine.
+        """
+
+        machine = FlyMachine(
+            name=name,
+            region=region,
+            config=config,
+        )
+
+        r = await self._make_api_post_request(
+            f"apps/{self.app_name}/machines",
+            payload=machine.model_dump(exclude_none=True),
+        )
+
+        if r.status_code != 200:
+            raise Exception(message=f"{r.status_code}: Unable to create machine!")
+
+        created_machine = FlyMachine(**r.json())
+
+        logging.info(f"Machine {created_machine.id} has been created in {region}.")
+
+        return created_machine
+
     async def list_machines(
         self,
         regions: list[str] = [],
@@ -91,33 +97,40 @@ class App(FlyApi):
         Args:
             ids_only: If True, only machine IDs will be returned. Defaults to False.
         """
-        url_path = f"apps/{self.app_name}/machines"
-        r = await self._make_api_get_request(url_path)
+        r = await self._make_api_get_request(f"apps/{self.app_name}/machines")
 
-        # Raise an exception if HTTP status code is not 200.
         if r.status_code != 200:
             raise Exception(message=f"Unable to get machines in {self.app_name}!")
 
-        # Create a FlyMachine object for each machine.
         machines = [FlyMachine(**machine) for machine in r.json()]
 
-        # Filter regions as needed.
         if len(regions) > 0:
             machines = [machine for machine in machines if machine.region in regions]
 
-        # Filter and return a list of ids if ids_only is True.
         if ids_only is True:
             return [machine.id for machine in machines]
 
         return machines
 
-    async def inspect(self):
-        """
-        Fetches the details of a Fly app.
-        """
-        r = await self._make_api_get_request(f"apps/{self.app_name}")
+    def Machine(
+        self,
+        machine_id: str | None = None,
+    ) -> Machine:
+        return Machine(
+            api_token=self.api_token,
+            org_slug=self.org_slug,
+            app_name=self.app_name,
+            machine_id=machine_id,
+        )
 
-        if r.status_code != 200:
-            raise Exception(message=f"Could not find {self.app_name}.")
+    ##################
+    # Volume Methods #
+    ##################
 
-        return FlyApp(**r.json())
+    def Volume(self, app_name) -> Volume:
+        return Volume(
+            api_token=self.api_token,
+            org_slug=self.org_slug,
+            app_name=app_name,
+            machine_id=self.machine_id,
+        )

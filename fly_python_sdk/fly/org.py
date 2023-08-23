@@ -1,13 +1,13 @@
-
-
 from fly_python_sdk.fly.api import FlyApi
 from fly_python_sdk.fly.app import App
-from fly_python_sdk.models import (
-    FlyApps,
-)
+from fly_python_sdk.models import FlyAppCreateRequest, FlyApps
 
 
 class Org(FlyApi):
+    """
+    A class for interacting with Fly.io Organizations.
+    """
+
     def __init__(
         self,
         api_token,
@@ -16,12 +16,36 @@ class Org(FlyApi):
         super().__init__(api_token)
         self.org_slug = org_slug
 
-    def App(self, app_name) -> "App":
-        return App(
-            api_token=self.api_token,
-            org_slug=self.org_slug,
+    ###############
+    # App Methods #
+    ###############
+
+    async def create_app(
+        self,
+        app_name: str,
+        network: str = "default",
+    ):
+        """Creates a new app on Fly.
+
+        Args:
+            app_name: The name of the new Fly app.
+            org_slug: The slug of the organization to create the app within.
+        """
+        app_details = FlyAppCreateRequest(
             app_name=app_name,
+            network=network,
+            org_slug=self.org_slug,
         )
+
+        r = await self._make_api_post_request(
+            "apps",
+            app_details.model_dump(),
+        )
+
+        if r.status_code != 201:
+            raise Exception(message=f"Unable to create {app_name} in {self.org_slug}.")
+
+        return
 
     async def list_apps(
         self,
@@ -58,3 +82,10 @@ class Org(FlyApi):
         )
 
         return apps
+
+    def App(self, app_name) -> "App":
+        return App(
+            api_token=self.api_token,
+            org_slug=self.org_slug,
+            app_name=app_name,
+        )

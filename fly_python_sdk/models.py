@@ -149,11 +149,12 @@ class FlyMachineEventRequest(BaseModel):
 
 
 class FlyMachineEvent(BaseModel):
-    type: str
-    status: str
+    id: str
     request: Optional[FlyMachineEventRequest] = None
     source: str
+    status: str
     timestamp: datetime
+    type: str
 
 
 class FlyMachine(BaseModel):
