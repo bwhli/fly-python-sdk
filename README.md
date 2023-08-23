@@ -21,10 +21,10 @@ fly = Fly("FLY_API_TOKEN")
 asyncio.run(fly.Org("org-slug").list_apps())
 
 # Create an app.
-asyncio.run(fly.Org("org-slug).App("app-name).create())
+asyncio.run(fly.Org("org-slug").App("app-name").create())
 
 # Fetch details about an app.
-asyncio.run(fly.Org("org-slug).App("app-name).inspect())
+asyncio.run(fly.Org("org-slug").App("app-name").inspect())
 
 
 ```
