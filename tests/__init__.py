@@ -7,7 +7,7 @@ from time import time
 from dotenv import load_dotenv
 
 from fly_python_sdk.fly import Fly
-from fly_python_sdk.models import FlyApps
+from fly_python_sdk.models import FlyApps, FlyMachine
 
 logging.getLogger().setLevel(logging.DEBUG)
 
@@ -31,7 +31,3 @@ def test_create_app():
         .create_app(hashlib.md5(str(time()).encode()).hexdigest())
     )
     assert app is None
-
-
-test_get_apps()
-test_create_app()

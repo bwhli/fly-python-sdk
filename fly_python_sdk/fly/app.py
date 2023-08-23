@@ -1,6 +1,7 @@
 import asyncio
 import logging
 
+from fly_python_sdk.exceptions import FlyError
 from fly_python_sdk.fly.api import FlyApi
 from fly_python_sdk.fly.machine import Machine
 from fly_python_sdk.fly.volume import Volume
@@ -55,9 +56,7 @@ class App(FlyApi):
 
     async def create_machine(
         self,
-        config: FlyMachineConfig,
-        name: str = None,
-        region: str = None,
+        machine: FlyMachine,
     ) -> FlyMachine | str:
         """Creates a Fly machine.
 
@@ -68,11 +67,8 @@ class App(FlyApi):
             region: The deployment region for the machine.
         """
 
-        machine = FlyMachine(
-            name=name,
-            region=region,
-            config=config,
-        )
+        logging.info(f"Creating machine in this region: {machine.region}...")
+        logging.info(f"Creating machine with this config: {machine.config}...")
 
         r = await self._make_api_post_request(
             f"apps/{self.app_name}/machines",
@@ -80,20 +76,34 @@ class App(FlyApi):
         )
 
         if r.status_code != 200:
-            raise Exception(message=f"{r.status_code}: Unable to create machine!")
+            logging.error(r.status_code)
+            raise FlyError(message=f"{r.status_code}: Unable to create machine!")
 
         created_machine = FlyMachine(**r.json())
 
-        logging.info(f"Machine {created_machine.id} has been created in {region}.")
+        logging.info(
+            f"Machine {created_machine.id} has been created in {machine.region}."
+        )
 
         return created_machine
+
+    async def create_machines(
+        self,
+        machines: list[FlyMachine],
+    ):
+        created_machines = await asyncio.gather(
+            *[self.create_machine(machine) for machine in machines]
+        )
+
+        return created_machines
 
     async def list_machines(
         self,
         regions: list[str] = [],
         ids_only: bool = False,
     ) -> list[FlyMachine] | list[str]:
-        """Returns a list of machines that belong to a Fly application.
+        """
+        Returns a list of machines that belong to a Fly application.
 
         Args:
             ids_only: If True, only machine IDs will be returned. Defaults to False.
