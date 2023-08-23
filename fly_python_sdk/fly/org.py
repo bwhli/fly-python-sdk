@@ -1,6 +1,6 @@
 from fly_python_sdk.fly.api import FlyApi
 from fly_python_sdk.fly.app import App
-from fly_python_sdk.models import FlyAppCreateRequest, FlyApps
+from fly_python_sdk.models.app import FlyApps
 
 
 class Org(FlyApi):
@@ -31,15 +31,16 @@ class Org(FlyApi):
             app_name: The name of the new Fly app.
             org_slug: The slug of the organization to create the app within.
         """
-        app_details = FlyAppCreateRequest(
-            app_name=app_name,
-            network=network,
-            org_slug=self.org_slug,
-        )
+
+        payload = {
+            "app_name": app_name,
+            "network": network,
+            "org_slug": self.org_slug,
+        }
 
         r = await self._make_api_post_request(
             "apps",
-            app_details.model_dump(),
+            payload,
         )
 
         if r.status_code != 201:

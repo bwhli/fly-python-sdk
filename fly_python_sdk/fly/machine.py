@@ -1,7 +1,7 @@
 import logging
 
 from fly_python_sdk.fly.api import FlyApi
-from fly_python_sdk.models import FlyMachine, FlyMachineEvent
+from fly_python_sdk.models.machine import FlyMachine, FlyMachineEvent
 
 
 class Machine(FlyApi):

@@ -5,7 +5,8 @@ from fly_python_sdk.exceptions import FlyError
 from fly_python_sdk.fly.api import FlyApi
 from fly_python_sdk.fly.machine import Machine
 from fly_python_sdk.fly.volume import Volume
-from fly_python_sdk.models import FlyApp, FlyMachine, FlyMachineConfig
+from fly_python_sdk.models.app import FlyApp
+from fly_python_sdk.models.machine import FlyMachine, FlyMachineConfig
 
 
 class App(FlyApi):

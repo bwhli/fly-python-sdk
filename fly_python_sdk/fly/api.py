@@ -19,10 +19,10 @@ class FlyApi:
         api_version=FLY_MACHINES_API_VERSION,
         base_url=FLY_MACHINES_API_DEFAULT_API_HOSTNAME,
     ):
-        self.api_token = api_token
-        self.api_timeout = api_timeout
-        self.api_version = api_version
-        self.base_url = base_url
+        self._api_token = api_token
+        self._api_timeout = api_timeout
+        self._api_version = api_version
+        self._base_url = base_url
 
     async def _make_api_delete_request(
         self,

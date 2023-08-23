@@ -5,45 +5,6 @@ from pydantic import BaseModel
 
 from fly_python_sdk import FLY_MACHINE_DEFAULT_CPU_COUNT, FLY_MACHINE_DEFAULT_MEMORY_MB
 
-# Apps
-
-
-class FlyOrg(BaseModel):
-    name: str
-    slug: str
-
-
-class FlyApp(BaseModel):
-    name: str
-    organization: FlyOrg
-    status: str
-
-
-class FlyAppCreateRequest(BaseModel):
-    app_name: str
-    network: str
-    org_slug: str
-
-
-class FlyAppDetailsResponse(BaseModel):
-    name: str
-    status: str
-    organization: dict
-
-
-class FlyApps(BaseModel):
-    apps: list["FlyAppsAppOverview"]
-    total_apps: int
-
-
-class FlyAppsAppOverview(BaseModel):
-    machine_count: int
-    name: str
-    network: str
-
-
-# Machines
-
 
 class FlyMachineConfigTcpCheck(BaseModel):
     type: str = "tcp"
