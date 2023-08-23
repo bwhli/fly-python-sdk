@@ -1,5 +1,3 @@
-import logging
-
 import httpx
 
 from fly_python_sdk import (
@@ -48,7 +46,7 @@ class FlyApi:
         async with httpx.AsyncClient(
             timeout=self.api_timeout,
         ) as client:
-            r = await client.inspect(
+            r = await client.get(
                 f"{self.base_url}/v{self.api_version}/{url_path}",
                 headers=self._generate_headers(),
             )

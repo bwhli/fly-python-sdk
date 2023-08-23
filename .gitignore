@@ -1,5 +1,6 @@
 .ruff_cache
 tests/__init__.py
+ignore/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

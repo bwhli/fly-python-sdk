@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 from fly_python_sdk.fly.api import FlyApi
@@ -111,6 +112,23 @@ class App(FlyApi):
             return [machine.id for machine in machines]
 
         return machines
+
+    async def destroy_machines(
+        self,
+        machine_ids: list[str],
+    ):
+        """
+        Destroys multiple Fly machines.
+
+        Args:
+            machine_ids (list[str]): A list of Fly machine IDs to destroy.
+        """
+
+        results = await asyncio.gather(
+            *[self.Machine(machine_id).destroy() for machine_id in machine_ids]
+        )
+
+        return results
 
     def Machine(
         self,
