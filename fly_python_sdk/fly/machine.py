@@ -1,5 +1,6 @@
 import logging
 
+from fly_python_sdk.exceptions import FlyError
 from fly_python_sdk.fly.api import FlyApi
 from fly_python_sdk.models.machine import FlyMachine, FlyMachineEvent
 
@@ -40,7 +41,7 @@ class Machine(FlyApi):
         )
 
         if r.status_code != 200:
-            raise Exception(
+            raise FlyError(
                 message=f"Unable to delete {self.machine_id} in {self.app_name}!"
             )
 
@@ -57,7 +58,7 @@ class Machine(FlyApi):
             machine_id: The id string for a Fly machine.
         """
         if not self.machine_id:
-            raise Exception(
+            raise FlyError(
                 message="Please provide the ID of the Machine you want to inspect."
             )
 
@@ -66,7 +67,7 @@ class Machine(FlyApi):
         )
 
         if r.status_code != 200:
-            raise Exception(
+            raise FlyError(
                 message=f"Unable to get {self.machine_id} in {self.app_name}!"
             )
 
@@ -87,7 +88,7 @@ class Machine(FlyApi):
 
         # Raise an exception if HTTP status code is not 200.
         if r.status_code != 200:
-            raise Exception(
+            raise FlyError(
                 message=f"Unable to start {self.machine_id} in {self.app_name}!"
             )
 
@@ -115,7 +116,7 @@ class Machine(FlyApi):
         )
 
         if r.status_code != 200:
-            raise Exception(
+            raise FlyError(
                 message=f"Unable to stop {self.machine_id} in {self.app_name}!"
             )
 

@@ -1,3 +1,4 @@
+from fly_python_sdk.exceptions import FlyError
 from fly_python_sdk.fly.api import FlyApi
 from fly_python_sdk.fly.app import App
 from fly_python_sdk.models.app import FlyApps
@@ -44,7 +45,7 @@ class Org(FlyApi):
         )
 
         if r.status_code != 201:
-            raise Exception(message=f"Unable to create {app_name} in {self.org_slug}.")
+            raise FlyError(message=f"Unable to create {app_name} in {self.org_slug}.")
 
         return
 
@@ -62,14 +63,14 @@ class Org(FlyApi):
                 Defaults to "name".
         """
         if sort_by not in ["machine_count", "name", "network"]:
-            raise Exception(
+            raise FlyError(
                 "Invalid sort_by value. Valid sort_by values are 'machine_count', 'name', and 'network'."
             )
 
         r = await self._make_api_get_request(f"apps?org_slug={self.org_slug}")
 
         if r.status_code != 200:
-            raise Exception(
+            raise FlyError(
                 message=f"Could not find apps in the {self.org_slug} organization."
             )
 

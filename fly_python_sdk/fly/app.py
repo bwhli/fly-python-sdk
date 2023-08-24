@@ -6,7 +6,7 @@ from fly_python_sdk.fly.api import FlyApi
 from fly_python_sdk.fly.machine import Machine
 from fly_python_sdk.fly.volume import Volume
 from fly_python_sdk.models.app import FlyApp
-from fly_python_sdk.models.machine import FlyMachine, FlyMachineConfig
+from fly_python_sdk.models.machine import FlyMachine
 
 
 class App(FlyApi):
@@ -37,7 +37,7 @@ class App(FlyApi):
         r = await self._make_api_delete_request(f"apps/{self.app_name}")
 
         if r.status_code != 202:
-            raise Exception(message=f"Could not delete {self.app_name}.")
+            raise FlyError(message=f"Could not delete {self.app_name}.")
 
         return
 
@@ -47,7 +47,7 @@ class App(FlyApi):
         r = await self._make_api_get_request(f"apps/{self.app_name}")
 
         if r.status_code != 200:
-            raise Exception(message=f"Could not find {self.app_name}.")
+            raise FlyError(message=f"Could not find {self.app_name}.")
 
         return FlyApp(**r.json())
 
@@ -112,7 +112,7 @@ class App(FlyApi):
         r = await self._make_api_get_request(f"apps/{self.app_name}/machines")
 
         if r.status_code != 200:
-            raise Exception(message=f"Unable to get machines in {self.app_name}!")
+            raise FlyError(message=f"Unable to get machines in {self.app_name}!")
 
         machines = [FlyMachine(**machine) for machine in r.json()]
 
