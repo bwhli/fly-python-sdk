@@ -15,12 +15,7 @@ class FlyAppDetailsResponse(BaseModel):
     organization: dict
 
 
-class FlyApps(BaseModel):
-    apps: list["FlyAppsAppOverview"]
-    total_apps: int
-
-
-class FlyAppsAppOverview(BaseModel):
+class FlyAppOverview(BaseModel):
     machine_count: int
     name: str
     network: str

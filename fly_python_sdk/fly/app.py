@@ -7,6 +7,7 @@ from fly_python_sdk.fly.machine import Machine
 from fly_python_sdk.fly.volume import Volume
 from fly_python_sdk.models.app import FlyApp
 from fly_python_sdk.models.machine import FlyMachine
+from fly_python_sdk.models.volume import FlyVolume
 
 
 class App(FlyApi):
@@ -155,6 +156,25 @@ class App(FlyApi):
     ##################
     # Volume Methods #
     ##################
+
+    async def list_volumes(
+        self,
+        app_name: str,
+    ) -> list[FlyVolume]:
+        """
+        Lists volumes for a Fly app.
+
+        Args:
+            app_name (str): The name of the Fly app to list volumes for.
+        """
+        r = await self._make_api_get_request(f"apps/{app_name}/volumes")
+
+        if r.status_code != 200:
+            raise FlyError(message=f"Unable to get volumes in {app_name}!")
+
+        volumes = [FlyVolume(**volume) for volume in r.json()]
+
+        return volumes
 
     def Volume(self, app_name) -> Volume:
         return Volume(

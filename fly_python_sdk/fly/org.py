@@ -1,7 +1,9 @@
+import logging
+
 from fly_python_sdk.exceptions import FlyError
 from fly_python_sdk.fly.api import FlyApi
 from fly_python_sdk.fly.app import App
-from fly_python_sdk.models.app import FlyApps
+from fly_python_sdk.models.app import FlyAppOverview
 
 
 class Org(FlyApi):
@@ -52,7 +54,7 @@ class Org(FlyApi):
     async def list_apps(
         self,
         sort_by: str = "name",
-    ):
+    ) -> list[FlyAppOverview]:
         """
         Returns a list of apps that belong to a Fly organization.
 
@@ -62,7 +64,11 @@ class Org(FlyApi):
                 Valid values are "machine_count", "name", and "network".
                 Defaults to "name".
         """
-        if sort_by not in ["machine_count", "name", "network"]:
+        if sort_by not in [
+            "machine_count",
+            "name",
+            "network",
+        ]:
             raise FlyError(
                 "Invalid sort_by value. Valid sort_by values are 'machine_count', 'name', and 'network'."
             )
@@ -74,14 +80,12 @@ class Org(FlyApi):
                 message=f"Could not find apps in the {self.org_slug} organization."
             )
 
-        apps = FlyApps(**r.json())
-        apps.apps = sorted(
-            apps.apps,
-            key=lambda app: getattr(
-                app,
-                sort_by,
-            ),
-        )
+        logging.debug(r.json())
+
+        apps = [FlyAppOverview(**app) for app in r.json()["apps"]]
+        apps.sort(key=lambda app: getattr(app, sort_by))
+
+        logging.debug(apps)
 
         return apps
 

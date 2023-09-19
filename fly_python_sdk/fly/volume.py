@@ -1,4 +1,5 @@
 from fly_python_sdk.fly.api import FlyApi
+from fly_python_sdk.models.volume import FlyVolume
 
 
 class Volume(FlyApi):
