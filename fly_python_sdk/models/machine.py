@@ -28,6 +28,8 @@ class FlyMachineConfigHttpCheck(BaseModel):
 class FlyMachineConfigGuest(BaseModel):
     cpu_kind: str
     cpus: int = FLY_MACHINE_DEFAULT_CPU_COUNT
+    gpu_kind: Optional[str] = None
+    host_dedication_id: Optional[str] = None
     memory_mb: int = FLY_MACHINE_DEFAULT_MEMORY_MB
     kernel_args: Optional[list[str]] = None
 
